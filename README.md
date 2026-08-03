@@ -1,0 +1,89 @@
+# Firmen-Kanban Board
+
+Ein einfaches, selbst gehostetes Kanban Board. Besteht aus zwei Teilen:
+
+- `backend/` – kleiner Node/Express-Server, speichert Boards/Listen/Karten aktuell in einer JSON-Datei (`backend/db.json`). Leicht spaeter gegen eine echte Datenbank (z.B. PostgreSQL) austauschbar.
+- `frontend/` – React-App (Vite), zeigt das Board an, Drag & Drop mit `@dnd-kit`.
+
+## Lokal starten
+
+Du brauchst zwei Terminal-Fenster (beide Server laufen parallel).
+
+**Terminal 1 – Backend:**
+```
+cd backend
+npm install
+npm start
+```
+Laeuft danach unter http://localhost:4000
+
+**Terminal 2 – Frontend:**
+```
+cd frontend
+npm install
+npm run dev
+```
+Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Browser oeffnen.
+
+## Was schon geht
+
+- Seitenlayout: links ein Menue (1/5 Breite), rechts der Inhalt in einem eigenen Rahmen (ca. 4/5 Breite)
+- Menuepunkt "Kanban" zeigt das Board, Menuepunkt "Archiv" zeigt alle archivierten Projekte
+- Sobald alle Tags eines Projekts in der Spalte "Umgesetzt" liegen, erscheint dort unten ein roter "Archivieren"-Button; ein Klick speichert Titel, Start-/Ziel-Datum, Archivierungsdatum, Tags, Zustaendige, Beschreibung/Bemerkungen und alle Anhaenge (Dateien/Links) im Archiv und entfernt das Projekt vom Board
+- Im Archiv kann jedes Projekt per "Wiederherstellen"-Button zurueck aufs Board geholt werden: es landet frisch in der "Projekte"-Liste (neues Start-Datum, kein Ziel-Datum), die Tags starten wieder in der ersten Arbeits-Spalte - Titel, Zustaendige, Beschreibung und Anhaenge bleiben erhalten
+- Ueber der Tabelle (Kanban und Archiv) gibt es eine Filterleiste: Suche nach Projektname, nach Hauptverantwortlichem (erster Zugewiesener) und nach Beteiligten (alle weiteren Zugewiesenen); alle drei Felder lassen sich kombinieren
+- Zeilen-Ansicht: jedes Projekt ist eine eigene Zeile, klar durch eine Linie von den anderen getrennt
+- Ganz links in jeder Zeile: Projektname, Team-Bild/Initiale, zugewiesene Personen, feste Tag-Uebersicht
+- Rechts daneben die Arbeits-Spalten als Kopfzeile: Warte auf Kunden, In Bearbeitung, on Hold, Fertig
+- Tags eines Projekts lassen sich per Drag & Drop nur innerhalb der eigenen Zeile zwischen den Spalten verschieben (ein Tag kann nicht versehentlich einem anderen Projekt zugeordnet werden)
+- Neues Projekt anlegen ueber "+ Projekt" unten in der Zeilen-Ansicht, mit Titel, Tags und zugewiesenen Personen
+- Jedem Projekt koennen mehrere Tags gleichzeitig zugewiesen werden; "Sonstiges" erlaubt zusaetzlich einen frei eingebbaren Text pro Zuweisung
+- Unter der Team-Spalte gibt es eine Tags-Spalte: Tags anzeigen, umbenennen, Farbe aendern und neue Tags erstellen. Loeschen entfernt den Tag ueberall (von allen Projekten und offenen Tag-Karten auf dem Board)
+- Karten bearbeiten (Titel, Beschreibung, Tags, Personen nachtraeglich aendern/ergaenzen)
+- Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen
+- Arbeits-Spalten anlegen; per Griff (⠿) in der Kopfzeile lassen sich Spalten neu anordnen
+- Ganz rechts steht immer fixiert die Spalte "Umgesetzt": nicht loeschbar und bleibt immer die letzte Spalte, egal wie viele andere Spalten dazwischen hinzugefuegt oder umsortiert werden
+- Ganz links (in der Team-Spalte) Personen hinzufuegen, umbenennen, entfernen
+- Jede Person kann ein Profilbild bekommen: hochladen, per Drag verschieben und mit einem Regler zoomen, wird automatisch rund zugeschnitten und komprimiert gespeichert
+- Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
+- Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
+- Hochgeladene Dateien landen unter `backend/uploads/`; ueber die JSON-Anfrage aktuell max. ca. 6-7 MB pro Datei
+- Links vom Projektnamen zeigt eine schmale Spalte Start- und Ziel-Datum: Start wird beim Anlegen automatisch gesetzt und ist nicht mehr aenderbar, das Ziel-Datum kann jederzeit ueber "Bearbeiten" gesetzt/geaendert werden
+- Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
+
+## Naechste sinnvolle Schritte
+
+- **Team-Zugriff**: aktuell laeuft alles nur auf `localhost` bei dir – fuer echte Zusammenarbeit muss das Board erreichbar gemacht werden (z.B. im Firmennetz hosten oder in die Cloud deployen, siehe Chat)
+- **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
+- **Login/Auth**, damit man sieht wer was gemacht hat und nicht jeder alles loeschen kann
+- Projekt-Zeilen selbst per Drag & Drop neu sortieren (aktuell nur Spalten und Tags innerhalb einer Zeile)
+- Archivierte Projekte lassen sich aktuell nicht loeschen
+
+## Projektstruktur
+
+```
+Kanban/
+├── backend/
+│   ├── server.js       # Express-Server + REST-API
+│   ├── db.json         # Datenspeicher (Listen/Karten)
+│   ├── uploads/         # Hochgeladene Anhang-Dateien
+│   └── package.json
+└── frontend/
+    ├── src/
+    │   ├── api.js               # Verbindung zum Backend
+    │   ├── tags.js              # Tag-Definitionen (Namen/Farben)
+    │   ├── App.jsx              # Seitenmenue (Kanban/Archiv) + Grundgeruest
+    │   └── components/
+    │       ├── ArchivPage.jsx   # Platzhalter fuer abgeschlossene Projekte
+    │       ├── Board.jsx        # Zeilen-Layout (Swimlanes) + Drag&Drop-Logik
+    │       ├── StageHeader.jsx  # Kopfzelle einer Arbeits-Spalte
+    │       ├── FixedStageHeader.jsx # Kopfzelle der fixierten "Umgesetzt"-Spalte
+    │       ├── StageCell.jsx    # Zelle: Tags eines Projekts in einer Spalte
+    │       ├── DateCell.jsx     # Start-/Ziel-Datum links vom Projektnamen
+    │       ├── Card.jsx         # Zeilen-Kopf (Projektname, Team, Tags)
+    │       ├── TeamColumn.jsx   # Fixierte Team-Spalte
+    │       ├── TagsColumn.jsx   # Fixierte Tags-Spalte (unter Team)
+    │       ├── ResponsibleFilterBar.jsx # Filterleiste ueber der Tabelle
+    │       └── TagPicker.jsx
+    └── package.json
+```

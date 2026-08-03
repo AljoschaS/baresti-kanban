@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+.env
+# Echte Daten (Projekte/Team/Anhaenge) - gehoeren nicht ins Git, sondern
+# auf ein dauerhaftes Volume beim Hosting. server.js legt beim ersten Start
+# automatisch eine leere, gueltige db.json an, falls keine vorhanden ist.
+db.json
+uploads/
