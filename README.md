@@ -1,9 +1,11 @@
-# Firmen-Kanban Board
+# Baresti GmbH – Kanban Board
 
 Ein einfaches, selbst gehostetes Kanban Board. Besteht aus zwei Teilen:
 
 - `backend/` – kleiner Node/Express-Server, speichert Boards/Listen/Karten aktuell in einer JSON-Datei (`backend/db.json`). Leicht spaeter gegen eine echte Datenbank (z.B. PostgreSQL) austauschbar.
 - `frontend/` – React-App (Vite), zeigt das Board an, Drag & Drop mit `@dnd-kit`.
+
+Soll das Board fuer Kollegen online erreichbar gemacht werden? Siehe **[DEPLOY.md](./DEPLOY.md)**.
 
 ## Lokal starten
 
@@ -49,13 +51,14 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
 - Hochgeladene Dateien landen unter `backend/uploads/`; ueber die JSON-Anfrage aktuell max. ca. 6-7 MB pro Datei
 - Links vom Projektnamen zeigt eine schmale Spalte Start- und Ziel-Datum: Start wird beim Anlegen automatisch gesetzt und ist nicht mehr aenderbar, das Ziel-Datum kann jederzeit ueber "Bearbeiten" gesetzt/geaendert werden
+- Beim Ziehen eines Tags/einer Spalte bleibt eine Kopie sichtbar am Mauszeiger (DragOverlay), statt erst beim Loslassen zu erscheinen
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
+- Fertig vorbereitet fuers Hosting: gemeinsamer Passwortschutz (Umgebungsvariablen), ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
 
 ## Naechste sinnvolle Schritte
 
-- **Team-Zugriff**: aktuell laeuft alles nur auf `localhost` bei dir – fuer echte Zusammenarbeit muss das Board erreichbar gemacht werden (z.B. im Firmennetz hosten oder in die Cloud deployen, siehe Chat)
 - **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
-- **Login/Auth**, damit man sieht wer was gemacht hat und nicht jeder alles loeschen kann
+- **Individuelle Logins**, damit man sieht wer was gemacht hat (aktuell nur ein gemeinsames Passwort fuers ganze Team)
 - Projekt-Zeilen selbst per Drag & Drop neu sortieren (aktuell nur Spalten und Tags innerhalb einer Zeile)
 - Archivierte Projekte lassen sich aktuell nicht loeschen
 
@@ -74,7 +77,7 @@ Kanban/
     │   ├── tags.js              # Tag-Definitionen (Namen/Farben)
     │   ├── App.jsx              # Seitenmenue (Kanban/Archiv) + Grundgeruest
     │   └── components/
-    │       ├── ArchivPage.jsx   # Platzhalter fuer abgeschlossene Projekte
+    │       ├── ArchivPage.jsx   # Liste der archivierten Projekte
     │       ├── Board.jsx        # Zeilen-Layout (Swimlanes) + Drag&Drop-Logik
     │       ├── StageHeader.jsx  # Kopfzelle einer Arbeits-Spalte
     │       ├── FixedStageHeader.jsx # Kopfzelle der fixierten "Umgesetzt"-Spalte

@@ -1,0 +1,10 @@
+{
+  "name": "baresti-kanban",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Kanban Board fuer Baresti GmbH - Frontend (React) + Backend (Express) in einem Repo, wird als ein Dienst gehostet.",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd backend && npm install && npm start"
+  }
+}
