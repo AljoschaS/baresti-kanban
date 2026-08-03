@@ -268,6 +268,9 @@ app.delete("/api/users/:id", (req, res) => {
       c.assignees = c.assignees.filter((uid) => uid !== id);
     }
   });
+  db.tokens.forEach((t) => {
+    if (t.assigneeId === id) t.assigneeId = null;
+  });
   writeDB(db);
   res.status(204).end();
 });
@@ -366,6 +369,7 @@ app.post("/api/cards", (req, res) => {
     tagLabel: tag.tagLabel,
     listId: targetListId,
     position: itemCountInList(db, targetListId) + i,
+    assigneeId: null,
   }));
   db.tokens.push(...newTokens);
 
@@ -384,7 +388,17 @@ app.patch("/api/cards/:id", (req, res) => {
   if (description !== undefined) card.description = description;
   if (listId !== undefined) card.listId = listId;
   if (position !== undefined) card.position = position;
-  if (assignees !== undefined) card.assignees = normalizeAssignees(assignees, db);
+  if (assignees !== undefined) {
+    card.assignees = normalizeAssignees(assignees, db);
+    // Tags, die einem jetzt nicht mehr zugewiesenen Nutzer zugeteilt waren,
+    // muessen die Zuweisung verlieren - der ist fuer dieses Projekt nicht mehr waehlbar.
+    const stillValid = new Set(card.assignees);
+    db.tokens.forEach((t) => {
+      if (t.cardId === card.id && t.assigneeId != null && !stillValid.has(t.assigneeId)) {
+        t.assigneeId = null;
+      }
+    });
+  }
   // startDate wird bewusst nie hier gesetzt - das ist immer der Erstellungszeitpunkt.
   if (targetDate !== undefined) card.targetDate = targetDate || null;
 
@@ -404,6 +418,7 @@ app.patch("/api/cards/:id", (req, res) => {
         tagLabel: tag.tagLabel,
         listId: targetListId,
         position: itemCountInList(db, targetListId) + i,
+        assigneeId: null,
       }));
       db.tokens.push(...newTokens);
     }
@@ -509,6 +524,7 @@ app.post("/api/archive/:id/restore", (req, res) => {
     tagLabel: tag.tagLabel,
     listId: targetListId,
     position: itemCountInList(db, targetListId) + i,
+    assigneeId: null,
   }));
   db.tokens.push(...newTokens);
 
@@ -609,9 +625,21 @@ app.patch("/api/tokens/:id", (req, res) => {
   const token = db.tokens.find((t) => t.id === id);
   if (!token) return res.status(404).json({ error: "Token nicht gefunden" });
 
-  const { listId, position } = req.body;
+  const { listId, position, assigneeId } = req.body;
   if (listId !== undefined) token.listId = listId;
   if (position !== undefined) token.position = position;
+  if (assigneeId !== undefined) {
+    if (assigneeId === null) {
+      token.assigneeId = null;
+    } else {
+      const card = db.cards.find((c) => c.id === token.cardId);
+      const allowed = card && Array.isArray(card.assignees) && card.assignees.includes(assigneeId);
+      if (!allowed) {
+        return res.status(400).json({ error: "Nutzer ist diesem Projekt nicht zugewiesen" });
+      }
+      token.assigneeId = assigneeId;
+    }
+  }
 
   writeDB(db);
   res.json(token);

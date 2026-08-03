@@ -7,7 +7,7 @@ import TagToken from "./TagToken";
 // nur innerhalb derselben Projekt-Zeile in andere Zellen verschoben werden.
 // In der fixierten "Umgesetzt"-Spalte kann zusaetzlich ein "Archivieren"-Button
 // erscheinen, sobald alle Tags des Projekts hier angekommen sind.
-export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, showArchiveButton, onArchive }) {
+export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, showArchiveButton, onArchive, cardAssignees, users, onAssigneeChange }) {
   const { setNodeRef } = useDroppable({
     id: `cell-${cardId}-${list.id}`,
     data: { type: "cell", cardId, listId: list.id },
@@ -20,7 +20,15 @@ export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, s
       <div className="swimlane-cell-tags">
         <SortableContext items={tokenIds} strategy={rectSortingStrategy}>
           {tokens.map((token) => (
-            <TagToken key={token.domId} token={token} tags={tags} onDelete={onDeleteToken} />
+            <TagToken
+              key={token.domId}
+              token={token}
+              tags={tags}
+              onDelete={onDeleteToken}
+              cardAssignees={cardAssignees}
+              users={users}
+              onAssigneeChange={onAssigneeChange}
+            />
           ))}
         </SortableContext>
       </div>

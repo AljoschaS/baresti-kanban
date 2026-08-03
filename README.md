@@ -40,6 +40,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Tags eines Projekts lassen sich per Drag & Drop nur innerhalb der eigenen Zeile zwischen den Spalten verschieben (ein Tag kann nicht versehentlich einem anderen Projekt zugeordnet werden)
 - Neues Projekt anlegen ueber "+ Projekt" unten in der Zeilen-Ansicht, mit Titel, Tags und zugewiesenen Personen
 - Jedem Projekt koennen mehrere Tags gleichzeitig zugewiesen werden; "Sonstiges" erlaubt zusaetzlich einen frei eingebbaren Text pro Zuweisung
+- Jedem einzelnen Tag laesst sich oben links eine Person zuweisen (Auswahl beschraenkt auf Haupt- und Nebenverantwortliche des Projekts); wird eine Person vom Projekt entfernt oder ganz geloescht, verliert der Tag automatisch diese Zuweisung
 - Unter der Team-Spalte gibt es eine Tags-Spalte: Tags anzeigen, umbenennen, Farbe aendern und neue Tags erstellen. Loeschen entfernt den Tag ueberall (von allen Projekten und offenen Tag-Karten auf dem Board)
 - Karten bearbeiten (Titel, Beschreibung, Tags, Personen nachtraeglich aendern/ergaenzen)
 - Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen

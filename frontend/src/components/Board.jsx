@@ -288,6 +288,22 @@ export default function Board({
     );
   }
 
+  async function handleAssigneeChange(tokenId, assigneeId) {
+    try {
+      await api.updateToken(tokenId, { assigneeId });
+      setLists((prev) =>
+        prev.map((l) => ({
+          ...l,
+          items: l.items.map((it) =>
+            it.type === "token" && it.id === tokenId ? { ...it, assigneeId } : it
+          ),
+        }))
+      );
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function handleAddAttachment(cardId, data) {
     const attachment = await api.addAttachment(cardId, data);
     setLists((prev) =>
@@ -411,6 +427,9 @@ export default function Board({
                   tokens={tokensFor(card.id, list.id)}
                   tags={tags}
                   onDeleteToken={handleDeleteToken}
+                  cardAssignees={card.assignees}
+                  users={users}
+                  onAssigneeChange={handleAssigneeChange}
                 />
               ))}
               {pinnedRightList && (
@@ -422,6 +441,9 @@ export default function Board({
                   onDeleteToken={handleDeleteToken}
                   showArchiveButton={canArchiveCard(card.id)}
                   onArchive={handleArchiveCard}
+                  cardAssignees={card.assignees}
+                  users={users}
+                  onAssigneeChange={handleAssigneeChange}
                 />
               )}
               {/* Platzhalter unter der "+ Spalte"-Kopfzelle (jetzt ganz rechts,
