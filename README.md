@@ -30,7 +30,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 ## Was schon geht
 
 - Seitenlayout: volle Breite fuer den Inhalt, oben eine Topbar mit Suchfeldern, Team-/Tags-Dropdowns und Seiten-Menue
-- Menuepunkt "Kanban" zeigt das Board, Menuepunkt "Archiv" zeigt alle archivierten Projekte
+- Menuepunkt "Kanban" zeigt das Board, "Archiv" zeigt alle archivierten Projekte, "Journal" zeigt eine Aktivitaets-Historie (wer hat wann was gemacht: Projekte/Tags/Team/Spalten anlegen, bearbeiten, loeschen; Tags zwischen Spalten verschieben oder zuweisen; An-/Abmelden). Reine Positions-/Umsortierungs-Aenderungen per Drag&Drop werden bewusst nicht geloggt, um das Journal nicht zuzuspammen
 - Sobald alle Tags eines Projekts in der Spalte "Umgesetzt" liegen, erscheint dort unten ein roter "Archivieren"-Button; ein Klick speichert Titel, Start-/Ziel-Datum, Archivierungsdatum, Tags, Zustaendige, Beschreibung/Bemerkungen und alle Anhaenge (Dateien/Links) im Archiv und entfernt das Projekt vom Board
 - Im Archiv kann jedes Projekt per "Wiederherstellen"-Button zurueck aufs Board geholt werden: es landet frisch in der "Projekte"-Liste (neues Start-Datum, kein Ziel-Datum), die Tags starten wieder in der ersten Arbeits-Spalte - Titel, Zustaendige, Beschreibung und Anhaenge bleiben erhalten
 - Ueber der Tabelle (Kanban und Archiv) gibt es eine Filterleiste: Suche nach Projektname, nach Hauptverantwortlichem (erster Zugewiesener) und nach Beteiligten (alle weiteren Zugewiesenen); alle drei Felder lassen sich kombinieren
@@ -60,7 +60,6 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 ## Naechste sinnvolle Schritte
 
 - **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
-- Wer was geaendert hat sichtbar machen (Aktivitaets-Historie) - jetzt wo jede Person einen eigenen Login hat, waere das der naechste logische Schritt
 - Projekt-Zeilen selbst per Drag & Drop neu sortieren (aktuell nur Spalten und Tags innerhalb einer Zeile)
 - Archivierte Projekte lassen sich aktuell nicht loeschen
 - Passwort-Vergessen-Funktion (aktuell muss ein neues Passwort manuell im Team-Bereich gesetzt werden)
@@ -81,6 +80,7 @@ Kanban/
     │   ├── App.jsx              # Seitenmenue (Kanban/Archiv), Login-Status + Grundgeruest
     │   └── components/
     │       ├── LoginForm.jsx    # Login-Bildschirm (E-Mail + Passwort)
+    │       ├── JournalPage.jsx  # Aktivitaets-Historie (wer hat wann was gemacht)
     │       ├── ArchivPage.jsx   # Liste der archivierten Projekte
     │       ├── Board.jsx        # Zeilen-Layout (Swimlanes) + Drag&Drop-Logik
     │       ├── StageHeader.jsx  # Kopfzelle einer Arbeits-Spalte

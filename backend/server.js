@@ -48,6 +48,7 @@ const EMPTY_DB = {
   ],
   attachments: [],
   archivedProjects: [],
+  activityLog: [],
 };
 
 if (!fs.existsSync(DB_FILE)) {
@@ -117,10 +118,28 @@ app.post("/api/login", (req, res) => {
     secure: req.secure,
     maxAge: TOKEN_MAX_AGE_MS,
   });
+  logActivity(db, user, "login", `${user.name} hat sich angemeldet`);
+  writeDB(db);
   res.json({ user: publicUser(user) });
 });
 
 app.post("/api/logout", (req, res) => {
+  // Bewusst kein authRequired hier: Abmelden soll immer klappen, auch bei
+  // bereits abgelaufener/ungueltiger Sitzung - geloggt wird nur best-effort.
+  const token = req.cookies?.[TOKEN_COOKIE];
+  if (token) {
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      const db = readDB();
+      const user = db.users.find((u) => u.id === payload.uid);
+      if (user) {
+        logActivity(db, user, "logout", `${user.name} hat sich abgemeldet`);
+        writeDB(db);
+      }
+    } catch {
+      // Cookie ungueltig/abgelaufen - trotzdem normal ausloggen.
+    }
+  }
   res.clearCookie(TOKEN_COOKIE);
   res.status(204).end();
 });
@@ -181,10 +200,39 @@ function normalizeTags(tags) {
     .map((t) => ({ tagKey: t.tagKey, tagLabel: t.tagLabel || "" }));
 }
 
+// Fuer Journal-Texte: Standard-Tags haben meist kein eigenes tagLabel
+// (das kommt aus der Tag-Definition), nur "Sonstiges" & Co. haben einen
+// individuellen Text. Hier holen wir uns notfalls die Definition dazu.
+function getTagLabelFallback(db, tagKey) {
+  const def = (db.tags || []).find((t) => t.key === tagKey);
+  return def?.label || tagKey;
+}
+
 function normalizeAssignees(assignees, db) {
   if (!Array.isArray(assignees)) return [];
   const validIds = new Set(db.users.map((u) => u.id));
   return [...new Set(assignees.map(Number))].filter((id) => validIds.has(id));
+}
+
+// --- Journal: wer hat wann was gemacht ---
+// actor ist entweder req.user (aus authRequired) oder waehrend der
+// Bootstrap-Phase/beim Login-Vorgang direkt ein Nutzer-Objekt/null.
+// Bewusst NICHT fuer reine Positions-/Reihenfolge-Aenderungen aufgerufen,
+// sonst wuerde jedes Verschieben per Drag&Drop das Journal zuspammen.
+function logActivity(db, actor, action, summary) {
+  if (!db.activityLog) db.activityLog = [];
+  db.activityLog.push({
+    id: nextId(db.activityLog),
+    ts: new Date().toISOString(),
+    userId: actor ? actor.id : null,
+    userName: actor ? actor.name : "System",
+    action,
+    summary,
+  });
+  // Nicht unbegrenzt wachsen lassen.
+  if (db.activityLog.length > 2000) {
+    db.activityLog = db.activityLog.slice(db.activityLog.length - 2000);
+  }
 }
 
 const USER_COLORS = [
@@ -226,6 +274,13 @@ app.get("/api/board", (req, res) => {
   res.json({ lists, users, archive, tags });
 });
 
+// --- Journal: Aktivitaets-Historie (wer hat wann was gemacht) ---
+app.get("/api/activity", (req, res) => {
+  const db = readDB();
+  const entries = [...(db.activityLog || [])].sort((a, b) => b.id - a.id).slice(0, 500);
+  res.json({ entries });
+});
+
 // --- Tags: verwaltbare Tag-Definitionen (Label + Farbe) ---
 app.post("/api/tags", (req, res) => {
   const db = readDB();
@@ -243,6 +298,7 @@ app.post("/api/tags", (req, res) => {
     custom: false,
   };
   db.tags.push(newTag);
+  logActivity(db, req.user, "tag.create", `${req.user?.name || "Jemand"} hat den Tag "${newTag.label}" erstellt`);
   writeDB(db);
   res.status(201).json(newTag);
 });
@@ -259,6 +315,7 @@ app.patch("/api/tags/:key", (req, res) => {
   if (req.body.color !== undefined) {
     tag.color = req.body.color;
   }
+  logActivity(db, req.user, "tag.update", `${req.user?.name || "Jemand"} hat den Tag "${tag.label}" bearbeitet`);
   writeDB(db);
   res.json(tag);
 });
@@ -267,8 +324,8 @@ app.delete("/api/tags/:key", (req, res) => {
   const db = readDB();
   if (!db.tags) db.tags = [];
   const key = req.params.key;
-  const exists = db.tags.some((t) => t.key === key);
-  if (!exists) return res.status(404).json({ error: "Tag nicht gefunden" });
+  const existing = db.tags.find((t) => t.key === key);
+  if (!existing) return res.status(404).json({ error: "Tag nicht gefunden" });
 
   db.tags = db.tags.filter((t) => t.key !== key);
   // Diesen Tag ueberall entfernen, wo er gerade zugewiesen ist: von den
@@ -280,6 +337,7 @@ app.delete("/api/tags/:key", (req, res) => {
   });
   db.tokens = db.tokens.filter((t) => t.tagKey !== key);
 
+  logActivity(db, req.user, "tag.delete", `${req.user?.name || "Jemand"} hat den Tag "${existing.label}" geloescht`);
   writeDB(db);
   res.status(204).end();
 });
@@ -306,6 +364,7 @@ app.post("/api/users", (req, res) => {
     passwordHash: password ? bcrypt.hashSync(password, 10) : null,
   };
   db.users.push(newUser);
+  logActivity(db, req.user, "user.create", `${req.user?.name || "Jemand"} hat "${newUser.name}" im Team hinzugefuegt`);
   writeDB(db);
   res.status(201).json(publicUser(newUser));
 });
@@ -315,7 +374,9 @@ app.patch("/api/users/:id", (req, res) => {
   const id = Number(req.params.id);
   const user = db.users.find((u) => u.id === id);
   if (!user) return res.status(404).json({ error: "Nutzer nicht gefunden" });
-  if (req.body.name !== undefined && req.body.name.trim()) {
+  const changedParts = [];
+  if (req.body.name !== undefined && req.body.name.trim() && req.body.name.trim() !== user.name) {
+    changedParts.push("Name");
     user.name = req.body.name.trim();
   }
   if (req.body.color !== undefined) {
@@ -330,11 +391,21 @@ app.patch("/api/users/:id", (req, res) => {
       const taken = db.users.some((u) => u.id !== id && normalizeEmail(u.email) === cleanEmail);
       if (taken) return res.status(400).json({ error: "E-Mail wird bereits verwendet" });
     }
+    if (cleanEmail !== normalizeEmail(user.email)) changedParts.push("E-Mail");
     user.email = cleanEmail || null;
   }
   // Leeres Passwort beim Bearbeiten = unveraendert lassen (kein versehentliches Loeschen).
   if (req.body.password) {
     user.passwordHash = bcrypt.hashSync(req.body.password, 10);
+    changedParts.push("Passwort");
+  }
+  if (changedParts.length) {
+    logActivity(
+      db,
+      req.user,
+      "user.update",
+      `${req.user?.name || "Jemand"} hat bei "${user.name}" ${changedParts.join(", ")} geaendert`
+    );
   }
   writeDB(db);
   res.json(publicUser(user));
@@ -343,6 +414,7 @@ app.patch("/api/users/:id", (req, res) => {
 app.delete("/api/users/:id", (req, res) => {
   const db = readDB();
   const id = Number(req.params.id);
+  const removedUser = db.users.find((u) => u.id === id);
   db.users = db.users.filter((u) => u.id !== id);
   db.cards.forEach((c) => {
     if (Array.isArray(c.assignees)) {
@@ -352,6 +424,9 @@ app.delete("/api/users/:id", (req, res) => {
   db.tokens.forEach((t) => {
     if (t.assigneeId === id) t.assigneeId = null;
   });
+  if (removedUser) {
+    logActivity(db, req.user, "user.delete", `${req.user?.name || "Jemand"} hat "${removedUser.name}" aus dem Team entfernt`);
+  }
   writeDB(db);
   res.status(204).end();
 });
@@ -383,6 +458,7 @@ app.post("/api/lists", (req, res) => {
     .forEach((l) => {
       l.position = newPosition + 1;
     });
+  logActivity(db, req.user, "list.create", `${req.user?.name || "Jemand"} hat die Spalte "${newList.title}" erstellt`);
   writeDB(db);
   res.status(201).json(newList);
 });
@@ -392,7 +468,13 @@ app.patch("/api/lists/:id", (req, res) => {
   const id = Number(req.params.id);
   const list = db.lists.find((l) => l.id === id);
   if (!list) return res.status(404).json({ error: "Liste nicht gefunden" });
-  if (req.body.title !== undefined) list.title = req.body.title;
+  // Reine Positions-Aenderungen (Spalten per Drag&Drop umsortieren) werden
+  // bewusst NICHT geloggt - nur echte Titel-Aenderungen.
+  if (req.body.title !== undefined && req.body.title !== list.title) {
+    const oldTitle = list.title;
+    list.title = req.body.title;
+    logActivity(db, req.user, "list.update", `${req.user?.name || "Jemand"} hat die Spalte "${oldTitle}" in "${list.title}" umbenannt`);
+  }
   if (req.body.position !== undefined) list.position = req.body.position;
   writeDB(db);
   res.json(list);
@@ -416,6 +498,7 @@ app.delete("/api/lists/:id", (req, res) => {
     (t) => t.listId !== id && !cardIds.includes(t.cardId)
   );
   db.attachments = db.attachments.filter((a) => !cardIds.includes(a.cardId));
+  logActivity(db, req.user, "list.delete", `${req.user?.name || "Jemand"} hat die Spalte "${list.title}" geloescht`);
   writeDB(db);
   res.status(204).end();
 });
@@ -454,6 +537,7 @@ app.post("/api/cards", (req, res) => {
   }));
   db.tokens.push(...newTokens);
 
+  logActivity(db, req.user, "card.create", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" angelegt`);
   writeDB(db);
   res.status(201).json({ card: newCard, tokens: newTokens });
 });
@@ -465,12 +549,26 @@ app.patch("/api/cards/:id", (req, res) => {
   if (!card) return res.status(404).json({ error: "Karte nicht gefunden" });
 
   const { title, description, listId, position, tags, assignees, targetDate } = req.body;
-  if (title !== undefined) card.title = title;
-  if (description !== undefined) card.description = description;
+  // Reine Positions-/Listen-Aenderungen (Zeilen per Drag&Drop umsortieren)
+  // werden bewusst NICHT im Journal geloggt - nur inhaltliche Aenderungen.
+  const changedParts = [];
+  if (title !== undefined && title !== card.title) {
+    changedParts.push("Titel");
+    card.title = title;
+  }
+  if (description !== undefined && description !== card.description) {
+    changedParts.push("Beschreibung");
+    card.description = description;
+  }
   if (listId !== undefined) card.listId = listId;
   if (position !== undefined) card.position = position;
   if (assignees !== undefined) {
-    card.assignees = normalizeAssignees(assignees, db);
+    const newAssignees = normalizeAssignees(assignees, db);
+    const changed =
+      newAssignees.length !== card.assignees.length ||
+      newAssignees.some((uid) => !card.assignees.includes(uid));
+    if (changed) changedParts.push("Zustaendige");
+    card.assignees = newAssignees;
     // Tags, die einem jetzt nicht mehr zugewiesenen Nutzer zugeteilt waren,
     // muessen die Zuweisung verlieren - der ist fuer dieses Projekt nicht mehr waehlbar.
     const stillValid = new Set(card.assignees);
@@ -481,7 +579,10 @@ app.patch("/api/cards/:id", (req, res) => {
     });
   }
   // startDate wird bewusst nie hier gesetzt - das ist immer der Erstellungszeitpunkt.
-  if (targetDate !== undefined) card.targetDate = targetDate || null;
+  if (targetDate !== undefined && (targetDate || null) !== card.targetDate) {
+    changedParts.push("Ziel-Datum");
+    card.targetDate = targetDate || null;
+  }
 
   let newTokens = [];
   if (tags !== undefined) {
@@ -491,6 +592,7 @@ app.patch("/api/cards/:id", (req, res) => {
     card.tags = cleanTags;
 
     if (addedTags.length) {
+      changedParts.push("Tags");
       const targetListId = nextListId(db, card.listId);
       newTokens = addedTags.map((tag, i) => ({
         id: nextId(db.tokens) + i,
@@ -505,6 +607,14 @@ app.patch("/api/cards/:id", (req, res) => {
     }
   }
 
+  if (changedParts.length) {
+    logActivity(
+      db,
+      req.user,
+      "card.update",
+      `${req.user?.name || "Jemand"} hat bei "${card.title}" ${changedParts.join(", ")} geaendert`
+    );
+  }
   writeDB(db);
   res.json({ card, tokens: newTokens });
 });
@@ -512,12 +622,16 @@ app.patch("/api/cards/:id", (req, res) => {
 app.delete("/api/cards/:id", (req, res) => {
   const db = readDB();
   const id = Number(req.params.id);
+  const card = db.cards.find((c) => c.id === id);
   db.attachments
     .filter((a) => a.cardId === id && a.type === "file")
     .forEach((a) => deleteUploadedFile(a.url));
   db.cards = db.cards.filter((c) => c.id !== id);
   db.tokens = db.tokens.filter((t) => t.cardId !== id);
   db.attachments = db.attachments.filter((a) => a.cardId !== id);
+  if (card) {
+    logActivity(db, req.user, "card.delete", `${req.user?.name || "Jemand"} hat das Projekt "${card.title}" geloescht`);
+  }
   writeDB(db);
   res.status(204).end();
 });
@@ -563,6 +677,7 @@ app.post("/api/cards/:id/archive", (req, res) => {
   db.tokens = db.tokens.filter((t) => t.cardId !== id);
   db.attachments = db.attachments.filter((a) => a.cardId !== id);
 
+  logActivity(db, req.user, "card.archive", `${req.user?.name || "Jemand"} hat das Projekt "${archived.title}" archiviert`);
   writeDB(db);
   res.status(201).json(archived);
 });
@@ -622,8 +737,27 @@ app.post("/api/archive/:id/restore", (req, res) => {
 
   db.archivedProjects.splice(archivedIndex, 1);
 
+  logActivity(db, req.user, "card.restore", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" aus dem Archiv wiederhergestellt`);
   writeDB(db);
   res.status(201).json({ card: newCard, tokens: newTokens, attachments: newAttachments });
+});
+
+// Archiviertes Projekt endgueltig loeschen (inkl. hochgeladener Anhaenge).
+app.delete("/api/archive/:id", (req, res) => {
+  const db = readDB();
+  const id = Number(req.params.id);
+  if (!db.archivedProjects) db.archivedProjects = [];
+  const archived = db.archivedProjects.find((p) => p.id === id);
+  if (!archived) return res.status(404).json({ error: "Archiv-Eintrag nicht gefunden" });
+
+  (archived.attachments || [])
+    .filter((a) => a.type === "file")
+    .forEach((a) => deleteUploadedFile(a.url));
+
+  db.archivedProjects = db.archivedProjects.filter((p) => p.id !== id);
+  logActivity(db, req.user, "card.delete_archived", `${req.user?.name || "Jemand"} hat das archivierte Projekt "${archived.title}" endgueltig geloescht`);
+  writeDB(db);
+  res.status(204).end();
 });
 
 // --- Anhaenge (Web-Links oder hochgeladene Dateien) ---
@@ -655,6 +789,7 @@ app.post("/api/cards/:cardId/attachments", (req, res) => {
       url: url.trim(),
     };
     db.attachments.push(attachment);
+    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat den Link "${attachment.label}" zu "${card.title}" hinzugefuegt`);
     writeDB(db);
     return res.status(201).json(attachment);
   }
@@ -680,6 +815,7 @@ app.post("/api/cards/:cardId/attachments", (req, res) => {
       size: buffer.length,
     };
     db.attachments.push(attachment);
+    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat die Datei "${attachment.label}" zu "${card.title}" hinzugefuegt`);
     writeDB(db);
     return res.status(201).json(attachment);
   }
@@ -695,6 +831,10 @@ app.delete("/api/attachments/:id", (req, res) => {
     deleteUploadedFile(attachment.url);
   }
   db.attachments = db.attachments.filter((a) => a.id !== id);
+  if (attachment) {
+    const card = db.cards.find((c) => c.id === attachment.cardId);
+    logActivity(db, req.user, "attachment.delete", `${req.user?.name || "Jemand"} hat den Anhang "${attachment.label}" von "${card?.title || "?"}" entfernt`);
+  }
   writeDB(db);
   res.status(204).end();
 });
@@ -707,18 +847,39 @@ app.patch("/api/tokens/:id", (req, res) => {
   if (!token) return res.status(404).json({ error: "Token nicht gefunden" });
 
   const { listId, position, assigneeId } = req.body;
-  if (listId !== undefined) token.listId = listId;
+  const card = db.cards.find((c) => c.id === token.cardId);
+  const tagLabel = token.tagLabel || getTagLabelFallback(db, token.tagKey);
+
+  // Spalten-Wechsel (Stage-Move) wird geloggt, reine Umsortierung innerhalb
+  // derselben Spalte (nur position) bewusst nicht - sonst spammt jedes
+  // Drag&Drop das Journal.
+  if (listId !== undefined && listId !== token.listId) {
+    const oldList = db.lists.find((l) => l.id === token.listId);
+    const newList = db.lists.find((l) => l.id === listId);
+    token.listId = listId;
+    logActivity(
+      db,
+      req.user,
+      "token.move",
+      `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" von "${oldList?.title || "?"}" nach "${newList?.title || "?"}" verschoben`
+    );
+  }
   if (position !== undefined) token.position = position;
   if (assigneeId !== undefined) {
     if (assigneeId === null) {
+      if (token.assigneeId != null) {
+        const prevUser = db.users.find((u) => u.id === token.assigneeId);
+        logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat die Zuweisung von "${tagLabel}" bei "${card?.title || "?"}"${prevUser ? ` (${prevUser.name})` : ""} entfernt`);
+      }
       token.assigneeId = null;
     } else {
-      const card = db.cards.find((c) => c.id === token.cardId);
       const allowed = card && Array.isArray(card.assignees) && card.assignees.includes(assigneeId);
       if (!allowed) {
         return res.status(400).json({ error: "Nutzer ist diesem Projekt nicht zugewiesen" });
       }
       token.assigneeId = assigneeId;
+      const newUser = db.users.find((u) => u.id === assigneeId);
+      logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" ${newUser ? newUser.name : "jemandem"} zugewiesen`);
     }
   }
 
@@ -729,7 +890,13 @@ app.patch("/api/tokens/:id", (req, res) => {
 app.delete("/api/tokens/:id", (req, res) => {
   const db = readDB();
   const id = Number(req.params.id);
+  const token = db.tokens.find((t) => t.id === id);
   db.tokens = db.tokens.filter((t) => t.id !== id);
+  if (token) {
+    const card = db.cards.find((c) => c.id === token.cardId);
+    const tagLabel = token.tagLabel || getTagLabelFallback(db, token.tagKey);
+    logActivity(db, req.user, "token.delete", `${req.user?.name || "Jemand"} hat "${tagLabel}" von "${card?.title || "?"}" entfernt`);
+  }
   writeDB(db);
   res.status(204).end();
 });

@@ -4,6 +4,7 @@ import TeamColumn from "./components/TeamColumn";
 import TagsColumn from "./components/TagsColumn";
 import TopBarDropdown from "./components/TopBarDropdown";
 import ArchivPage from "./components/ArchivPage";
+import JournalPage from "./components/JournalPage";
 import ResponsibleFilterBar from "./components/ResponsibleFilterBar";
 import LoginForm from "./components/LoginForm";
 import { api, onUnauthorized } from "./api";
@@ -195,6 +196,12 @@ export default function App() {
           >
             Archiv
           </button>
+          <button
+            className={"site-menu-item" + (page === "journal" ? " active" : "")}
+            onClick={() => setPage("journal")}
+          >
+            Journal
+          </button>
         </nav>
         {currentUser && (
           <button className="site-menu-item logout-btn" onClick={handleLogout} title={currentUser.email || ""}>
@@ -217,7 +224,7 @@ export default function App() {
     <div className="page-shell">
       <div className="app">
         <header className="app-header">
-          <h1>{page === "archiv" ? "Archiv" : "Baresti GmbH"}</h1>
+          <h1>{page === "archiv" ? "Archiv" : page === "journal" ? "Journal" : "Baresti GmbH"}</h1>
         </header>
         {error && <div className="error-banner">{error}</div>}
         {page === "kanban" && !error && !lists && <div className="loading">Lade Board...</div>}
@@ -272,6 +279,14 @@ export default function App() {
               mainFilter={archivMainFilter}
               secondaryFilter={archivSecondaryFilter}
             />
+          </>
+        )}
+        {page === "journal" && (
+          <>
+            <div className="filter-bar-row filter-bar-row-end">
+              <TopBarExtras />
+            </div>
+            <JournalPage />
           </>
         )}
       </div>

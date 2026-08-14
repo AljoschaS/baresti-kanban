@@ -56,6 +56,7 @@ export const api = {
   logout: () => request("/logout", { method: "POST" }),
 
   getBoard: () => request("/board"),
+  getActivity: () => request("/activity"),
 
   createList: (title) =>
     request("/lists", { method: "POST", body: JSON.stringify({ title }) }),
