@@ -11,6 +11,33 @@ import { api, onUnauthorized } from "./api";
 import { toListWithItems, cardToItem, tokenToItem } from "./boardUtils";
 import "./App.css";
 
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="15" height="15" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.13 1.13M4.23 11.67l-1.13 1.13M12.9 12.9l-1.13-1.13M4.23 4.33 3.1 3.2"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="15" height="15" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M13.5 9.7A6 6 0 0 1 6.3 2.5a6 6 0 1 0 7.2 7.2Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState("kanban");
   const [lists, setLists] = useState(null);
@@ -31,6 +58,24 @@ export default function App() {
   const [archivTitleFilter, setArchivTitleFilter] = useState("");
   const [archivMainFilter, setArchivMainFilter] = useState("");
   const [archivSecondaryFilter, setArchivSecondaryFilter] = useState("");
+
+  // Theme: startet mit dem zuletzt gewaehlten Wert (localStorage), sonst mit
+  // der Systemeinstellung, sonst hell. data-theme am <html>-Element steuert
+  // die CSS-Variablen in App.css.
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }
 
   function applyBoardData(data) {
     setLists(data.lists.map(toListWithItems));
@@ -212,6 +257,14 @@ export default function App() {
             Journal
           </button>
         </nav>
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Helles Design" : "Dunkles Design"}
+        >
+          {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+        </button>
         {currentUser && (
           <button className="site-menu-item logout-btn" onClick={handleLogout} title={currentUser.email || ""}>
             {currentUser.name} · Abmelden

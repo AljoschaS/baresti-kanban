@@ -59,6 +59,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Beim Ziehen eines Tags/einer Spalte bleibt eine Kopie sichtbar am Mauszeiger (DragOverlay), statt erst beim Loslassen zu erscheinen
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
 - Fertig vorbereitet fuers Hosting: individueller Login je Person, ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
+- Dark/Light-Modus: Sonne/Mond-Button ganz oben rechts in der Topbar schaltet um; die Wahl wird gemerkt (auch nach Neuladen), startet sonst nach der Systemeinstellung
 
 ## Naechste sinnvolle Schritte
 
