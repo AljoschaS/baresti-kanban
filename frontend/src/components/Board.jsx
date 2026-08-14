@@ -7,12 +7,15 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import Card from "./Card";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import StageHeader from "./StageHeader";
 import FixedStageHeader from "./FixedStageHeader";
-import StageCell from "./StageCell";
-import DateCell from "./DateCell";
+import ProjectRow from "./ProjectRow";
 import TagPicker from "./TagPicker";
 import UserPicker from "./UserPicker";
 import { api } from "../api";
@@ -43,6 +46,7 @@ export default function Board({
   // Loslassen "reinzuspringen".
   const [activeToken, setActiveToken] = useState(null);
   const [activeColumn, setActiveColumn] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -103,6 +107,12 @@ export default function Board({
     );
   }
 
+  async function persistCardPositions(orderedCards) {
+    await Promise.all(
+      orderedCards.map((c, index) => api.updateCard(c.id, { position: index }))
+    );
+  }
+
   function resolveStageListIdFromOverId(overId) {
     if (String(overId).startsWith("col-")) return Number(String(overId).replace("col-", ""));
     return null;
@@ -120,6 +130,28 @@ export default function Board({
     const reordered = arrayMove(lists, oldIndex, newIndex);
     setLists(reordered);
     persistListPositions(reordered);
+  }
+
+  function handleRowDragEnd(active, over) {
+    const activeCardId = Number(String(active.id).replace("card-", ""));
+    const overCardId = Number(String(over.id).replace("card-", ""));
+    if (activeCardId === overCardId) return;
+
+    const oldIndex = projectCards.findIndex((c) => c.id === activeCardId);
+    const newIndex = projectCards.findIndex((c) => c.id === overCardId);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(projectCards, oldIndex, newIndex);
+
+    setLists((prev) =>
+      prev.map((l) => {
+        if (l.id !== projectList.id) return l;
+        const nonCardItems = l.items.filter((it) => it.type !== "card");
+        const reorderedItems = reordered.map((c, index) => ({ ...c, position: index }));
+        return { ...l, items: [...nonCardItems, ...reorderedItems] };
+      })
+    );
+    persistCardPositions(reordered);
   }
 
   function handleTokenDragEnd(active, over) {
@@ -182,6 +214,13 @@ export default function Board({
     if (active.data.current?.type === "list") {
       setActiveColumn(lists.find((l) => l.id === active.data.current.listId) || null);
       setActiveToken(null);
+      setActiveRow(null);
+      return;
+    }
+    if (active.data.current?.type === "row") {
+      setActiveRow(projectCards.find((c) => c.id === active.data.current.cardId) || null);
+      setActiveToken(null);
+      setActiveColumn(null);
       return;
     }
     const loc = findTokenLocation(active.id);
@@ -189,16 +228,22 @@ export default function Board({
     const token = list?.items.find((it) => it.domId === active.id);
     setActiveToken(token || null);
     setActiveColumn(null);
+    setActiveRow(null);
   }
 
   function handleDragEnd(event) {
     const { active, over } = event;
     setActiveToken(null);
     setActiveColumn(null);
+    setActiveRow(null);
     if (!over) return;
 
     if (active.data.current?.type === "list") {
       handleColumnDragEnd(active, over);
+      return;
+    }
+    if (active.data.current?.type === "row") {
+      handleRowDragEnd(active, over);
       return;
     }
     handleTokenDragEnd(active, over);
@@ -207,6 +252,7 @@ export default function Board({
   function handleDragCancel() {
     setActiveToken(null);
     setActiveColumn(null);
+    setActiveRow(null);
   }
 
   async function handleAddCard(listId, title, tags, assignees) {
@@ -371,6 +417,7 @@ export default function Board({
     >
       <div className="swimlane-scroll">
         <div className="swimlane-header">
+          <div className="row-drag-handle-header" />
           <div className="date-header-cell">Start / Ziel</div>
           <div className="swimlane-row-label-header">Projekte</div>
           <SortableContext items={stageLists.map((l) => `col-${l.id}`)} strategy={horizontalListSortingStrategy}>
@@ -404,59 +451,37 @@ export default function Board({
         </div>
 
         <div className="swimlane-body">
-          {visibleProjectCards.map((card) => (
-            <div className="swimlane-row" key={card.id}>
-              <DateCell startDate={card.startDate} targetDate={card.targetDate} />
-              <div className="swimlane-row-label">
-                <Card
-                  card={card}
-                  users={users}
-                  tags={tags}
-                  onDelete={handleDeleteCard}
-                  onUpdate={handleUpdateCard}
-                  onAddAttachment={handleAddAttachment}
-                  onDeleteAttachment={handleDeleteAttachment}
-                  draggable={false}
-                />
-              </div>
-              {stageLists.map((list) => (
-                <StageCell
-                  key={list.id}
-                  cardId={card.id}
-                  list={list}
-                  tokens={tokensFor(card.id, list.id)}
-                  tags={tags}
-                  onDeleteToken={handleDeleteToken}
-                  cardAssignees={card.assignees}
-                  users={users}
-                  onAssigneeChange={handleAssigneeChange}
-                />
-              ))}
-              {pinnedRightList && (
-                <StageCell
-                  cardId={card.id}
-                  list={pinnedRightList}
-                  tokens={tokensFor(card.id, pinnedRightList.id)}
-                  tags={tags}
-                  onDeleteToken={handleDeleteToken}
-                  showArchiveButton={canArchiveCard(card.id)}
-                  onArchive={handleArchiveCard}
-                  cardAssignees={card.assignees}
-                  users={users}
-                  onAssigneeChange={handleAssigneeChange}
-                />
-              )}
-              {/* Platzhalter unter der "+ Spalte"-Kopfzelle (jetzt ganz rechts,
-                  hinter "Umgesetzt"), damit die Spaltenbreiten ausgerichtet bleiben. */}
-              <div className="swimlane-cell add-stage-filler-cell" />
-            </div>
-          ))}
+          <SortableContext
+            items={visibleProjectCards.map((c) => `card-${c.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {visibleProjectCards.map((card) => (
+              <ProjectRow
+                key={card.id}
+                card={card}
+                stageLists={stageLists}
+                pinnedRightList={pinnedRightList}
+                tokensFor={tokensFor}
+                tags={tags}
+                users={users}
+                onDeleteToken={handleDeleteToken}
+                onAssigneeChange={handleAssigneeChange}
+                canArchiveCard={canArchiveCard}
+                onArchive={handleArchiveCard}
+                onDeleteCard={handleDeleteCard}
+                onUpdateCard={handleUpdateCard}
+                onAddAttachment={handleAddAttachment}
+                onDeleteAttachment={handleDeleteAttachment}
+              />
+            ))}
+          </SortableContext>
 
           {visibleProjectCards.length === 0 && (titleFilter.trim() || mainFilter.trim() || secondaryFilter.trim()) && (
             <div className="filter-empty-hint">Keine Projekte gefunden, die zum Filter passen.</div>
           )}
 
           <div className="swimlane-row swimlane-add-row">
+            <div className="row-drag-handle-cell row-drag-handle-cell-empty" />
             <div className="date-cell" />
             <div className="swimlane-row-label">
               {addingProject ? (
@@ -502,6 +527,12 @@ export default function Board({
           <div className="stage-header-cell stage-header-overlay">
             <span className="list-drag-handle">⠿</span>
             <span className="stage-title">{activeColumn.title}</span>
+          </div>
+        )}
+        {activeRow && (
+          <div className="row-drag-overlay">
+            <span className="row-drag-handle-cell">⠿</span>
+            <span className="row-drag-overlay-title">{activeRow.title}</span>
           </div>
         )}
       </DragOverlay>

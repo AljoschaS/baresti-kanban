@@ -442,6 +442,48 @@
   border-bottom: none;
 }
 
+.row-drag-handle-header,
+.row-drag-handle-cell {
+  width: 20px;
+  min-width: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a5adba;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.row-drag-handle-cell {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.row-drag-handle-cell:hover {
+  color: #6b778c;
+}
+
+.row-drag-handle-cell-empty {
+  cursor: default;
+}
+
+.row-drag-overlay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #dfe1e6;
+  border-radius: 6px;
+  padding: 8px 14px;
+  box-shadow: 0 8px 20px rgba(9, 30, 66, 0.25);
+  font-size: 13px;
+  font-weight: 600;
+  color: #172b4d;
+  cursor: grabbing;
+}
+
 .date-header-cell,
 .date-cell {
   width: 100px;
