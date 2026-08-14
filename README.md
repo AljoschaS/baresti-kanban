@@ -29,7 +29,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 
 ## Was schon geht
 
-- Seitenlayout: links ein Menue (1/5 Breite), rechts der Inhalt in einem eigenen Rahmen (ca. 4/5 Breite)
+- Seitenlayout: volle Breite fuer den Inhalt, oben eine Topbar mit Suchfeldern, Team-/Tags-Dropdowns und Seiten-Menue
 - Menuepunkt "Kanban" zeigt das Board, Menuepunkt "Archiv" zeigt alle archivierten Projekte
 - Sobald alle Tags eines Projekts in der Spalte "Umgesetzt" liegen, erscheint dort unten ein roter "Archivieren"-Button; ein Klick speichert Titel, Start-/Ziel-Datum, Archivierungsdatum, Tags, Zustaendige, Beschreibung/Bemerkungen und alle Anhaenge (Dateien/Links) im Archiv und entfernt das Projekt vom Board
 - Im Archiv kann jedes Projekt per "Wiederherstellen"-Button zurueck aufs Board geholt werden: es landet frisch in der "Projekte"-Liste (neues Start-Datum, kein Ziel-Datum), die Tags starten wieder in der ersten Arbeits-Spalte - Titel, Zustaendige, Beschreibung und Anhaenge bleiben erhalten
@@ -41,12 +41,12 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Neues Projekt anlegen ueber "+ Projekt" unten in der Zeilen-Ansicht, mit Titel, Tags und zugewiesenen Personen
 - Jedem Projekt koennen mehrere Tags gleichzeitig zugewiesen werden; "Sonstiges" erlaubt zusaetzlich einen frei eingebbaren Text pro Zuweisung
 - Jedem einzelnen Tag laesst sich oben links eine Person zuweisen (Auswahl beschraenkt auf Haupt- und Nebenverantwortliche des Projekts); wird eine Person vom Projekt entfernt oder ganz geloescht, verliert der Tag automatisch diese Zuweisung
-- Unter der Team-Spalte gibt es eine Tags-Spalte: Tags anzeigen, umbenennen, Farbe aendern und neue Tags erstellen. Loeschen entfernt den Tag ueberall (von allen Projekten und offenen Tag-Karten auf dem Board)
+- Team und Tags sind als Dropdown-Menues oben rechts in der Topbar erreichbar (mit Anzahl-Badge): Nutzer bzw. Tags anzeigen, hinzufuegen, umbenennen, Farbe aendern. Loeschen eines Tags entfernt ihn ueberall (von allen Projekten und offenen Tag-Karten auf dem Board)
 - Karten bearbeiten (Titel, Beschreibung, Tags, Personen nachtraeglich aendern/ergaenzen)
 - Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen
 - Arbeits-Spalten anlegen; per Griff (⠿) in der Kopfzeile lassen sich Spalten neu anordnen
 - Ganz rechts steht immer fixiert die Spalte "Umgesetzt": nicht loeschbar und bleibt immer die letzte Spalte, egal wie viele andere Spalten dazwischen hinzugefuegt oder umsortiert werden
-- Ganz links (in der Team-Spalte) Personen hinzufuegen, umbenennen, entfernen
+- Im Team-Dropdown (Topbar) Personen hinzufuegen, umbenennen, entfernen
 - Jede Person kann ein Profilbild bekommen: hochladen, per Drag verschieben und mit einem Regler zoomen, wird automatisch rund zugeschnitten und komprimiert gespeichert
 - Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
 - Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
@@ -85,8 +85,9 @@ Kanban/
     │       ├── StageCell.jsx    # Zelle: Tags eines Projekts in einer Spalte
     │       ├── DateCell.jsx     # Start-/Ziel-Datum links vom Projektnamen
     │       ├── Card.jsx         # Zeilen-Kopf (Projektname, Team, Tags)
-    │       ├── TeamColumn.jsx   # Fixierte Team-Spalte
-    │       ├── TagsColumn.jsx   # Fixierte Tags-Spalte (unter Team)
+    │       ├── TeamColumn.jsx   # Team-Verwaltung (Inhalt des Team-Dropdowns)
+    │       ├── TagsColumn.jsx   # Tags-Verwaltung (Inhalt des Tags-Dropdowns)
+    │       ├── TopBarDropdown.jsx # Generisches Dropdown-Panel fuer die Topbar
     │       ├── ResponsibleFilterBar.jsx # Filterleiste ueber der Tabelle
     │       └── TagPicker.jsx
     └── package.json

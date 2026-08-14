@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Board from "./components/Board";
 import TeamColumn from "./components/TeamColumn";
 import TagsColumn from "./components/TagsColumn";
+import TopBarDropdown from "./components/TopBarDropdown";
 import ArchivPage from "./components/ArchivPage";
 import ResponsibleFilterBar from "./components/ResponsibleFilterBar";
 import { api } from "./api";
@@ -120,24 +121,43 @@ export default function App() {
     }
   }
 
-  // Menue (Kanban/Archiv) steht jetzt rechts neben der Suchleiste statt in
-  // einer eigenen linken Spalte - spart Platz auf schmaleren Bildschirmen.
-  function SiteMenu() {
+  // Menue (Kanban/Archiv) sowie Team- und Tags-Verwaltung stehen jetzt
+  // gesammelt oben rechts in der Topbar statt in einer eigenen linken
+  // Spalte - Team/Tags als Dropdown, spart Platz auf schmaleren Bildschirmen.
+  function TopBarExtras() {
     return (
-      <nav className="site-menu-inline">
-        <button
-          className={"site-menu-item" + (page === "kanban" ? " active" : "")}
-          onClick={() => setPage("kanban")}
-        >
-          Kanban
-        </button>
-        <button
-          className={"site-menu-item" + (page === "archiv" ? " active" : "")}
-          onClick={() => setPage("archiv")}
-        >
-          Archiv
-        </button>
-      </nav>
+      <div className="topbar-extras">
+        <TopBarDropdown label="Team" count={users.length}>
+          <TeamColumn
+            users={users}
+            onAddUser={handleAddUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
+          />
+        </TopBarDropdown>
+        <TopBarDropdown label="Tags" count={tags.length}>
+          <TagsColumn
+            tags={tags}
+            onAddTag={handleAddTag}
+            onUpdateTag={handleUpdateTag}
+            onDeleteTag={handleDeleteTag}
+          />
+        </TopBarDropdown>
+        <nav className="site-menu-inline">
+          <button
+            className={"site-menu-item" + (page === "kanban" ? " active" : "")}
+            onClick={() => setPage("kanban")}
+          >
+            Kanban
+          </button>
+          <button
+            className={"site-menu-item" + (page === "archiv" ? " active" : "")}
+            onClick={() => setPage("archiv")}
+          >
+            Archiv
+          </button>
+        </nav>
+      </div>
     );
   }
 
@@ -160,24 +180,10 @@ export default function App() {
                 onMainChange={setKanbanMainFilter}
                 onSecondaryChange={setKanbanSecondaryFilter}
               />
-              <SiteMenu />
+              <TopBarExtras />
             </div>
             <div className="kanban-frame">
               <div className="app-main">
-                <div className="sidebar-stack">
-                  <TeamColumn
-                    users={users}
-                    onAddUser={handleAddUser}
-                    onUpdateUser={handleUpdateUser}
-                    onDeleteUser={handleDeleteUser}
-                  />
-                  <TagsColumn
-                    tags={tags}
-                    onAddTag={handleAddTag}
-                    onUpdateTag={handleUpdateTag}
-                    onDeleteTag={handleDeleteTag}
-                  />
-                </div>
                 <Board
                   lists={lists}
                   setLists={setLists}
@@ -203,7 +209,7 @@ export default function App() {
                 onMainChange={setArchivMainFilter}
                 onSecondaryChange={setArchivSecondaryFilter}
               />
-              <SiteMenu />
+              <TopBarExtras />
             </div>
             <ArchivPage
               archive={archive}
