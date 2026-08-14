@@ -22,8 +22,12 @@ export default function ProjectRow({
   onAddAttachment,
   onDeleteAttachment,
 }) {
+  // Eigenes "row-" Praefix (statt "card-"), weil Card.jsx selbst intern
+  // ebenfalls ein (hier deaktiviertes) useSortable mit der id `card-${id}`
+  // registriert - zwei Komponenten mit derselben Sortable-ID wuerden sich
+  // innerhalb desselben DndContext in die Quere kommen.
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: `card-${card.id}`, data: { type: "row", cardId: card.id } });
+    useSortable({ id: `row-${card.id}`, data: { type: "row", cardId: card.id } });
 
   const style = {
     transform: CSS.Transform.toString(transform),

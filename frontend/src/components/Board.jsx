@@ -133,8 +133,8 @@ export default function Board({
   }
 
   function handleRowDragEnd(active, over) {
-    const activeCardId = Number(String(active.id).replace("card-", ""));
-    const overCardId = Number(String(over.id).replace("card-", ""));
+    const activeCardId = Number(String(active.id).replace("row-", ""));
+    const overCardId = Number(String(over.id).replace("row-", ""));
     if (activeCardId === overCardId) return;
 
     const oldIndex = projectCards.findIndex((c) => c.id === activeCardId);
@@ -452,7 +452,7 @@ export default function Board({
 
         <div className="swimlane-body">
           <SortableContext
-            items={visibleProjectCards.map((c) => `card-${c.id}`)}
+            items={visibleProjectCards.map((c) => `row-${c.id}`)}
             strategy={verticalListSortingStrategy}
           >
             {visibleProjectCards.map((card) => (
