@@ -244,6 +244,28 @@
   background: #0747a6;
 }
 
+.archiv-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.archiv-delete-btn {
+  background: none;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  color: #6b778c;
+  cursor: pointer;
+  padding: 5px 7px;
+  line-height: 0;
+}
+
+.archiv-delete-btn:hover {
+  color: #de350b;
+  border-color: #ffbdaf;
+  background: #ffebe6;
+}
+
 .app {
   flex: 1 1 100%;
   min-width: 0;

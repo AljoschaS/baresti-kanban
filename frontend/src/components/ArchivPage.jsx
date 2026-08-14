@@ -3,12 +3,27 @@ import { getTagDisplay } from "../tags";
 import { matchesResponsibleFilter, matchesTitleFilter } from "../filterUtils";
 import AttachmentList from "./AttachmentList";
 
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M2 4h12M6.3 4V2.5a1 1 0 0 1 1-1h1.4a1 1 0 0 1 1 1V4M3.4 4l.6 8.6a1 1 0 0 0 1 .9h5.9a1 1 0 0 0 1-.9L12.6 4"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // Zeigt alle archivierten Projekte (per "Archivieren"-Button vom Board aus).
 export default function ArchivPage({
   archive = [],
   tags = [],
   users = [],
   onRestore,
+  onDelete,
   titleFilter = "",
   mainFilter = "",
   secondaryFilter = "",
@@ -47,9 +62,23 @@ export default function ArchivPage({
                   Start {formatDate(project.startDate)} · Ziel {formatDate(project.targetDate)} · Archiviert am{" "}
                   {formatDate(project.archivedAt)}
                 </span>
-                <button className="restore-btn" onClick={() => onRestore?.(project.id)}>
-                  Wiederherstellen
-                </button>
+                <div className="archiv-item-actions">
+                  <button className="restore-btn" onClick={() => onRestore?.(project.id)}>
+                    Wiederherstellen
+                  </button>
+                  <button
+                    className="archiv-delete-btn"
+                    onClick={() => {
+                      if (confirm(`"${project.title}" endgueltig aus dem Archiv loeschen? Das kann nicht rueckgaengig gemacht werden.`)) {
+                        onDelete?.(project.id);
+                      }
+                    }}
+                    aria-label="Endgueltig loeschen"
+                    title="Endgueltig loeschen"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
               </div>
             </div>
             {(first || rest.length > 0) && (

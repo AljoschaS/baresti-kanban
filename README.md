@@ -33,6 +33,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Menuepunkt "Kanban" zeigt das Board, "Archiv" zeigt alle archivierten Projekte, "Journal" zeigt eine Aktivitaets-Historie (wer hat wann was gemacht: Projekte/Tags/Team/Spalten anlegen, bearbeiten, loeschen; Tags zwischen Spalten verschieben oder zuweisen; An-/Abmelden). Reine Positions-/Umsortierungs-Aenderungen per Drag&Drop werden bewusst nicht geloggt, um das Journal nicht zuzuspammen
 - Sobald alle Tags eines Projekts in der Spalte "Umgesetzt" liegen, erscheint dort unten ein roter "Archivieren"-Button; ein Klick speichert Titel, Start-/Ziel-Datum, Archivierungsdatum, Tags, Zustaendige, Beschreibung/Bemerkungen und alle Anhaenge (Dateien/Links) im Archiv und entfernt das Projekt vom Board
 - Im Archiv kann jedes Projekt per "Wiederherstellen"-Button zurueck aufs Board geholt werden: es landet frisch in der "Projekte"-Liste (neues Start-Datum, kein Ziel-Datum), die Tags starten wieder in der ersten Arbeits-Spalte - Titel, Zustaendige, Beschreibung und Anhaenge bleiben erhalten
+- Archivierte Projekte lassen sich per Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen, inklusive hochgeladener Anhaenge
 - Ueber der Tabelle (Kanban und Archiv) gibt es eine Filterleiste: Suche nach Projektname, nach Hauptverantwortlichem (erster Zugewiesener) und nach Beteiligten (alle weiteren Zugewiesenen); alle drei Felder lassen sich kombinieren
 - Zeilen-Ansicht: jedes Projekt ist eine eigene Zeile, klar durch eine Linie von den anderen getrennt
 - Projekt-Zeilen lassen sich ueber einen Griff (⠿) ganz links per Drag & Drop neu sortieren; beim Ziehen bleibt eine Vorschau am Mauszeiger sichtbar (wie bei Tags/Spalten)
@@ -61,7 +62,6 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 ## Naechste sinnvolle Schritte
 
 - **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
-- Archivierte Projekte lassen sich aktuell nicht loeschen
 - Passwort-Vergessen-Funktion (aktuell muss ein neues Passwort manuell im Team-Bereich gesetzt werden)
 
 ## Projektstruktur

@@ -90,6 +90,7 @@ export const api = {
   archiveCard: (cardId) => request(`/cards/${cardId}/archive`, { method: "POST" }),
   restoreArchivedProject: (archivedId) =>
     request(`/archive/${archivedId}/restore`, { method: "POST" }),
+  deleteArchivedProject: (archivedId) => request(`/archive/${archivedId}`, { method: "DELETE" }),
 
   createTag: (label, color) =>
     request("/tags", { method: "POST", body: JSON.stringify({ label, color }) }),

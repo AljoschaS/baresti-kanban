@@ -161,6 +161,15 @@ export default function App() {
     }
   }
 
+  async function handleDeleteArchivedProject(archivedId) {
+    try {
+      await api.deleteArchivedProject(archivedId);
+      setArchive((prev) => prev.filter((p) => p.id !== archivedId));
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   // Menue (Kanban/Archiv) sowie Team- und Tags-Verwaltung stehen jetzt
   // gesammelt oben rechts in der Topbar statt in einer eigenen linken
   // Spalte - Team/Tags als Dropdown, spart Platz auf schmaleren Bildschirmen.
@@ -275,6 +284,7 @@ export default function App() {
               tags={tags}
               users={users}
               onRestore={handleRestoreProject}
+              onDelete={handleDeleteArchivedProject}
               titleFilter={archivTitleFilter}
               mainFilter={archivMainFilter}
               secondaryFilter={archivSecondaryFilter}
