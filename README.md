@@ -48,7 +48,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen
 - Arbeits-Spalten anlegen; per Griff (⠿) in der Kopfzeile lassen sich Spalten neu anordnen
 - Ganz rechts steht immer fixiert die Spalte "Umgesetzt": nicht loeschbar und bleibt immer die letzte Spalte, egal wie viele andere Spalten dazwischen hinzugefuegt oder umsortiert werden
-- Im Team-Dropdown (Topbar) Personen hinzufuegen, umbenennen, entfernen; optional mit E-Mail + Passwort fuer den individuellen Login (Passwort bei Bearbeiten leer lassen = unveraendert)
+- Im Team-Dropdown (Topbar) Personen hinzufuegen, umbenennen, entfernen; optional mit E-Mail + Passwort fuer den individuellen Login (Passwort bei Bearbeiten leer lassen = unveraendert). Ueber "Zufaellig generieren" laesst sich dort auch ein neues Passwort erzeugen (z.B. bei "Passwort vergessen") - wird kurz zum Kopieren angezeigt und muss der Person persoenlich mitgeteilt werden
 - Individueller Login: sobald mindestens eine Person ein Passwort hat, verlangt das Board eine Anmeldung mit E-Mail + Passwort; Sitzung bleibt 30 Tage gueltig (Cookie), Abmelden-Button oben rechts neben dem Team-Namen. Solange noch niemand ein Passwort gesetzt hat, bleibt das Board offen (Einrichtungsphase)
 - Jede Person kann ein Profilbild bekommen: hochladen, per Drag verschieben und mit einem Regler zoomen, wird automatisch rund zugeschnitten und komprimiert gespeichert
 - Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
@@ -62,7 +62,6 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 ## Naechste sinnvolle Schritte
 
 - **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
-- Passwort-Vergessen-Funktion (aktuell muss ein neues Passwort manuell im Team-Bereich gesetzt werden)
 
 ## Projektstruktur
 

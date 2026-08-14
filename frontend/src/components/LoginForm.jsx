@@ -53,6 +53,9 @@ export default function LoginForm({ onLoggedIn }) {
         <button type="submit" disabled={submitting}>
           {submitting ? "Anmelden..." : "Anmelden"}
         </button>
+        <p className="login-hint">
+          Passwort vergessen? Ein Teammitglied kann dir im Team-Bereich ein neues zuweisen.
+        </p>
       </form>
     </div>
   );

@@ -10,6 +10,16 @@ function readFileAsDataUrl(file) {
   });
 }
 
+// Fuer "Passwort vergessen": statt E-Mail-Versand kann jede eingeloggte
+// Person hier ein starkes Zufallspasswort erzeugen und es der betroffenen
+// Person persoenlich (Slack/WhatsApp/etc.) weitergeben.
+function generatePassword(length = 12) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint32Array(length);
+  (window.crypto || window.msCrypto).getRandomValues(bytes);
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
 // Fixierte Spalte ganz links: Team-Mitglieder verwalten (hinzufuegen,
 // umbenennen, entfernen, Profilbild + Farbe festlegen).
 export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUser }) {
@@ -19,6 +29,7 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
   const [newAvatar, setNewAvatar] = useState(null);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newPasswordVisible, setNewPasswordVisible] = useState(false);
   const [addError, setAddError] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
@@ -27,6 +38,7 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
   const [editingAvatar, setEditingAvatar] = useState(null);
   const [editingEmail, setEditingEmail] = useState("");
   const [editingPassword, setEditingPassword] = useState("");
+  const [editingPasswordVisible, setEditingPasswordVisible] = useState(false);
   const [editError, setEditError] = useState(null);
 
   // cropTarget: "new" oder eine Nutzer-ID, damit der Cropper weiss,
@@ -66,6 +78,7 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
       setNewAvatar(null);
       setNewEmail("");
       setNewPassword("");
+      setNewPasswordVisible(false);
       setAdding(false);
     } catch (err) {
       setAddError(err.message);
@@ -79,7 +92,13 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
     setEditingAvatar(user.avatar || null);
     setEditingEmail(user.email || "");
     setEditingPassword("");
+    setEditingPasswordVisible(false);
     setEditError(null);
+  }
+
+  function handleGeneratePassword() {
+    setEditingPassword(generatePassword());
+    setEditingPasswordVisible(true);
   }
 
   async function submitEdit(e) {
@@ -147,13 +166,34 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
                 onChange={(e) => setEditingEmail(e.target.value)}
                 placeholder="E-Mail (fuer Login)"
               />
-              <input
-                type="password"
-                value={editingPassword}
-                onChange={(e) => setEditingPassword(e.target.value)}
-                placeholder="Neues Passwort (leer = unveraendert)"
-                autoComplete="new-password"
-              />
+              <div className="password-reset-row">
+                <input
+                  type={editingPasswordVisible ? "text" : "password"}
+                  value={editingPassword}
+                  onChange={(e) => setEditingPassword(e.target.value)}
+                  placeholder="Neues Passwort (leer = unveraendert)"
+                  autoComplete="new-password"
+                />
+                <button type="button" className="password-generate-btn" onClick={handleGeneratePassword}>
+                  Zufaellig generieren
+                </button>
+                {editingPassword && (
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setEditingPasswordVisible((v) => !v)}
+                    aria-label={editingPasswordVisible ? "Passwort verbergen" : "Passwort anzeigen"}
+                  >
+                    {editingPasswordVisible ? "Verbergen" : "Anzeigen"}
+                  </button>
+                )}
+              </div>
+              {editingPasswordVisible && editingPassword && (
+                <div className="password-reset-hint">
+                  Bitte jetzt notieren/kopieren und der Person persoenlich mitteilen - nach dem Speichern
+                  ist es nicht mehr einsehbar.
+                </div>
+              )}
               {editError && <div className="login-error">{editError}</div>}
               <div className="add-card-actions">
                 <button type="submit">Speichern</button>
@@ -226,13 +266,35 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder="E-Mail (fuer Login, optional)"
           />
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Passwort (optional)"
-            autoComplete="new-password"
-          />
+          <div className="password-reset-row">
+            <input
+              type={newPasswordVisible ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Passwort (optional)"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              className="password-generate-btn"
+              onClick={() => {
+                setNewPassword(generatePassword());
+                setNewPasswordVisible(true);
+              }}
+            >
+              Zufaellig generieren
+            </button>
+            {newPassword && (
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setNewPasswordVisible((v) => !v)}
+                aria-label={newPasswordVisible ? "Passwort verbergen" : "Passwort anzeigen"}
+              >
+                {newPasswordVisible ? "Verbergen" : "Anzeigen"}
+              </button>
+            )}
+          </div>
           {addError && <div className="login-error">{addError}</div>}
           <div className="add-card-actions">
             <button type="submit">Hinzufuegen</button>
