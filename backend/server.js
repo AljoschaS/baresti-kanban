@@ -1,9 +1,15 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 
 const app = express();
+// Noetig, damit req.secure hinter dem Railway-Proxy korrekt erkannt wird
+// (fuer sichere Cookies in Produktion, ohne extra Umgebungsvariable).
+app.set("trust proxy", 1);
 // PORT wird beim Hosting meist automatisch als Umgebungsvariable vorgegeben.
 const PORT = process.env.PORT || 4000;
 // DATA_DIR: wo db.json + hochgeladene Dateien liegen. Beim Hosting sollte das
@@ -48,34 +54,90 @@ if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify(EMPTY_DB, null, 2));
 }
 
-// --- Passwortschutz (HTTP Basic Auth) ---
-// Nur aktiv, wenn BASIC_AUTH_USER/BASIC_AUTH_PASS gesetzt sind - lokal beim
-// Entwickeln bleibt es ohne Login. Schuetzt Frontend UND API gleichermassen.
-function checkBasicAuth(req, res, next) {
-  const authUser = process.env.BASIC_AUTH_USER;
-  const authPass = process.env.BASIC_AUTH_PASS;
-  if (!authUser || !authPass) return next();
+// --- Individueller Login (E-Mail + Passwort je Person) ---
+// JWT_SECRET unbedingt in Produktion (Railway-Variable) auf einen langen,
+// zufaelligen Wert setzen - ohne gesetzte Variable wird lokal ein fester
+// Entwicklungs-Schluessel verwendet, der fuer echtes Hosting nicht sicher ist.
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-bitte-in-produktion-per-JWT_SECRET-setzen";
+const TOKEN_COOKIE = "token";
+const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
 
-  const header = req.headers.authorization || "";
-  const [scheme, encoded] = header.split(" ");
-  if (scheme === "Basic" && encoded) {
-    const decoded = Buffer.from(encoded, "base64").toString("utf-8");
-    const sep = decoded.indexOf(":");
-    const reqUser = decoded.slice(0, sep);
-    const reqPass = decoded.slice(sep + 1);
-    if (reqUser === authUser && reqPass === authPass) return next();
-  }
-  res.set("WWW-Authenticate", 'Basic realm="Baresti GmbH Kanban"');
-  res.status(401).send("Zugriff verweigert");
+function normalizeEmail(email) {
+  return (email || "").trim().toLowerCase();
 }
-app.use(checkBasicAuth);
 
-app.use(cors());
+// Nutzer-Objekt ohne passwordHash - so verlassen Passwort-Hashes nie den Server.
+function publicUser(user) {
+  if (!user) return null;
+  const { passwordHash, ...rest } = user;
+  return rest;
+}
+
+// Solange noch niemand ein Passwort gesetzt hat, bleibt die App fuer alle
+// offen (wie bisher im lokalen Betrieb) - so lassen sich in Ruhe Zugaenge
+// fuer das ganze Team anlegen. Sobald mindestens eine Person ein Passwort
+// hat, verlangt jede API-Anfrage einen gueltigen Login.
+function authRequired(req, res, next) {
+  const db = readDB();
+  const anyPasswordSet = db.users.some((u) => u.passwordHash);
+  if (!anyPasswordSet) return next();
+
+  const token = req.cookies?.[TOKEN_COOKIE];
+  if (!token) return res.status(401).json({ error: "Bitte anmelden" });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    const user = db.users.find((u) => u.id === payload.uid);
+    if (!user) return res.status(401).json({ error: "Bitte anmelden" });
+    req.user = user;
+    next();
+  } catch {
+    res.status(401).json({ error: "Sitzung abgelaufen, bitte erneut anmelden" });
+  }
+}
+
+app.use(cookieParser());
+// origin:true spiegelt den anfragenden Ursprung (statt "*"), das ist noetig,
+// damit Cookies bei credentials:"include" ueberhaupt gesetzt/gesendet werden.
+app.use(cors({ origin: true, credentials: true }));
 // Hoeheres Limit, da Profilbilder/Datei-Anhaenge als Base64-Text im JSON-Body mitgeschickt werden.
 app.use(express.json({ limit: "8mb" }));
-// Hochgeladene Dateien liegen unter backend/uploads/ und werden hier ausgeliefert.
-app.use("/uploads", express.static(UPLOADS_DIR));
-// Das gebaute Frontend (falls vorhanden) ausliefern.
+
+app.post("/api/login", (req, res) => {
+  const db = readDB();
+  const email = normalizeEmail(req.body.email);
+  const password = req.body.password || "";
+  const user = db.users.find((u) => u.passwordHash && normalizeEmail(u.email) === email);
+  if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+    return res.status(401).json({ error: "E-Mail oder Passwort falsch" });
+  }
+  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  res.cookie(TOKEN_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: req.secure,
+    maxAge: TOKEN_MAX_AGE_MS,
+  });
+  res.json({ user: publicUser(user) });
+});
+
+app.post("/api/logout", (req, res) => {
+  res.clearCookie(TOKEN_COOKIE);
+  res.status(204).end();
+});
+
+app.get("/api/me", authRequired, (req, res) => {
+  const db = readDB();
+  const anyPasswordSet = db.users.some((u) => u.passwordHash);
+  if (!anyPasswordSet) return res.json({ authRequired: false, user: null });
+  res.json({ authRequired: true, user: publicUser(req.user) });
+});
+
+// Ab hier verlangt jede /api- und /uploads-Route einen Login (sobald die
+// Bootstrap-Phase vorbei ist, siehe authRequired oben).
+app.use("/api", authRequired);
+app.use("/uploads", authRequired, express.static(UPLOADS_DIR));
+// Das gebaute Frontend bleibt bewusst oeffentlich erreichbar - sonst koennte
+// das Login-Formular selbst nie geladen werden.
 app.use(express.static(FRONTEND_DIST));
 
 // --- ganz einfache Dateibasierte "Datenbank" ---
@@ -158,7 +220,7 @@ app.get("/api/board", (req, res) => {
           projectTitle: db.cards.find((c) => c.id === t.cardId)?.title || "",
         })),
     }));
-  const users = [...db.users].sort((a, b) => a.position - b.position);
+  const users = [...db.users].sort((a, b) => a.position - b.position).map(publicUser);
   const archive = [...(db.archivedProjects || [])].sort((a, b) => b.id - a.id);
   const tags = db.tags || [];
   res.json({ lists, users, archive, tags });
@@ -225,9 +287,14 @@ app.delete("/api/tags/:key", (req, res) => {
 // --- Team-Mitglieder ---
 app.post("/api/users", (req, res) => {
   const db = readDB();
-  const { name, color, avatar } = req.body;
+  const { name, color, avatar, email, password } = req.body;
   if (!name || !name.trim()) {
     return res.status(400).json({ error: "name ist erforderlich" });
+  }
+  const cleanEmail = email !== undefined ? normalizeEmail(email) : "";
+  if (cleanEmail) {
+    const taken = db.users.some((u) => normalizeEmail(u.email) === cleanEmail);
+    if (taken) return res.status(400).json({ error: "E-Mail wird bereits verwendet" });
   }
   const newUser = {
     id: nextId(db.users),
@@ -235,10 +302,12 @@ app.post("/api/users", (req, res) => {
     color: color || USER_COLORS[db.users.length % USER_COLORS.length],
     avatar: avatar || null,
     position: db.users.length,
+    email: cleanEmail || null,
+    passwordHash: password ? bcrypt.hashSync(password, 10) : null,
   };
   db.users.push(newUser);
   writeDB(db);
-  res.status(201).json(newUser);
+  res.status(201).json(publicUser(newUser));
 });
 
 app.patch("/api/users/:id", (req, res) => {
@@ -255,8 +324,20 @@ app.patch("/api/users/:id", (req, res) => {
   if (req.body.avatar !== undefined) {
     user.avatar = req.body.avatar;
   }
+  if (req.body.email !== undefined) {
+    const cleanEmail = normalizeEmail(req.body.email);
+    if (cleanEmail) {
+      const taken = db.users.some((u) => u.id !== id && normalizeEmail(u.email) === cleanEmail);
+      if (taken) return res.status(400).json({ error: "E-Mail wird bereits verwendet" });
+    }
+    user.email = cleanEmail || null;
+  }
+  // Leeres Passwort beim Bearbeiten = unveraendert lassen (kein versehentliches Loeschen).
+  if (req.body.password) {
+    user.passwordHash = bcrypt.hashSync(req.body.password, 10);
+  }
   writeDB(db);
-  res.json(user);
+  res.json(publicUser(user));
 });
 
 app.delete("/api/users/:id", (req, res) => {
@@ -666,7 +747,13 @@ app.get(/^\/(?!api|uploads).*/, (req, res) => {
 });
 
 app.listen(PORT, () => {
-  const authOn = Boolean(process.env.BASIC_AUTH_USER && process.env.BASIC_AUTH_PASS);
+  const db = readDB();
+  const authOn = db.users.some((u) => u.passwordHash);
   console.log(`Kanban-Backend laeuft auf http://localhost:${PORT}`);
-  console.log(`Passwortschutz: ${authOn ? "aktiv" : "aus (lokale Entwicklung)"}`);
+  console.log(
+    `Login-Pflicht: ${authOn ? "aktiv (mind. ein Nutzer hat ein Passwort)" : "aus - noch kein Nutzer-Passwort gesetzt"}`
+  );
+  if (!process.env.JWT_SECRET) {
+    console.log("Hinweis: JWT_SECRET ist nicht gesetzt - fuer echtes Hosting per Umgebungsvariable setzen.");
+  }
 });

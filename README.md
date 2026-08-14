@@ -46,7 +46,8 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen
 - Arbeits-Spalten anlegen; per Griff (⠿) in der Kopfzeile lassen sich Spalten neu anordnen
 - Ganz rechts steht immer fixiert die Spalte "Umgesetzt": nicht loeschbar und bleibt immer die letzte Spalte, egal wie viele andere Spalten dazwischen hinzugefuegt oder umsortiert werden
-- Im Team-Dropdown (Topbar) Personen hinzufuegen, umbenennen, entfernen
+- Im Team-Dropdown (Topbar) Personen hinzufuegen, umbenennen, entfernen; optional mit E-Mail + Passwort fuer den individuellen Login (Passwort bei Bearbeiten leer lassen = unveraendert)
+- Individueller Login: sobald mindestens eine Person ein Passwort hat, verlangt das Board eine Anmeldung mit E-Mail + Passwort; Sitzung bleibt 30 Tage gueltig (Cookie), Abmelden-Button oben rechts neben dem Team-Namen. Solange noch niemand ein Passwort gesetzt hat, bleibt das Board offen (Einrichtungsphase)
 - Jede Person kann ein Profilbild bekommen: hochladen, per Drag verschieben und mit einem Regler zoomen, wird automatisch rund zugeschnitten und komprimiert gespeichert
 - Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
 - Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
@@ -54,14 +55,15 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Links vom Projektnamen zeigt eine schmale Spalte Start- und Ziel-Datum: Start wird beim Anlegen automatisch gesetzt und ist nicht mehr aenderbar, das Ziel-Datum kann jederzeit ueber "Bearbeiten" gesetzt/geaendert werden
 - Beim Ziehen eines Tags/einer Spalte bleibt eine Kopie sichtbar am Mauszeiger (DragOverlay), statt erst beim Loslassen zu erscheinen
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
-- Fertig vorbereitet fuers Hosting: gemeinsamer Passwortschutz (Umgebungsvariablen), ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
+- Fertig vorbereitet fuers Hosting: individueller Login je Person, ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
 
 ## Naechste sinnvolle Schritte
 
 - **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
-- **Individuelle Logins**, damit man sieht wer was gemacht hat (aktuell nur ein gemeinsames Passwort fuers ganze Team)
+- Wer was geaendert hat sichtbar machen (Aktivitaets-Historie) - jetzt wo jede Person einen eigenen Login hat, waere das der naechste logische Schritt
 - Projekt-Zeilen selbst per Drag & Drop neu sortieren (aktuell nur Spalten und Tags innerhalb einer Zeile)
 - Archivierte Projekte lassen sich aktuell nicht loeschen
+- Passwort-Vergessen-Funktion (aktuell muss ein neues Passwort manuell im Team-Bereich gesetzt werden)
 
 ## Projektstruktur
 
@@ -76,8 +78,9 @@ Kanban/
     ├── src/
     │   ├── api.js               # Verbindung zum Backend
     │   ├── tags.js              # Tag-Definitionen (Namen/Farben)
-    │   ├── App.jsx              # Seitenmenue (Kanban/Archiv) + Grundgeruest
+    │   ├── App.jsx              # Seitenmenue (Kanban/Archiv), Login-Status + Grundgeruest
     │   └── components/
+    │       ├── LoginForm.jsx    # Login-Bildschirm (E-Mail + Passwort)
     │       ├── ArchivPage.jsx   # Liste der archivierten Projekte
     │       ├── Board.jsx        # Zeilen-Layout (Swimlanes) + Drag&Drop-Logik
     │       ├── StageHeader.jsx  # Kopfzelle einer Arbeits-Spalte

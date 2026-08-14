@@ -5,7 +5,8 @@ import TagsColumn from "./components/TagsColumn";
 import TopBarDropdown from "./components/TopBarDropdown";
 import ArchivPage from "./components/ArchivPage";
 import ResponsibleFilterBar from "./components/ResponsibleFilterBar";
-import { api } from "./api";
+import LoginForm from "./components/LoginForm";
+import { api, onUnauthorized } from "./api";
 import { toListWithItems, cardToItem, tokenToItem } from "./boardUtils";
 import "./App.css";
 
@@ -16,6 +17,12 @@ export default function App() {
   const [tags, setTags] = useState([]);
   const [archive, setArchive] = useState([]);
   const [error, setError] = useState(null);
+
+  // Auth: "loading" waehrend der erste Check laeuft, "login" wenn ein Login
+  // noetig ist, "ready" wenn die App genutzt werden kann (eingeloggt oder
+  // noch niemand hat ueberhaupt ein Passwort gesetzt).
+  const [authStatus, setAuthStatus] = useState("loading");
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [kanbanTitleFilter, setKanbanTitleFilter] = useState("");
   const [kanbanMainFilter, setKanbanMainFilter] = useState("");
@@ -31,7 +38,7 @@ export default function App() {
     setArchive(data.archive || []);
   }
 
-  useEffect(() => {
+  function loadBoard() {
     api
       .getBoard()
       .then(applyBoardData)
@@ -42,7 +49,39 @@ export default function App() {
             ")"
         )
       );
+  }
+
+  useEffect(() => {
+    // Springt jederzeit auf den Login-Bildschirm, wenn eine Anfrage mit 401
+    // zurueckkommt - z.B. wenn waehrend des Einrichtens gerade das erste
+    // Nutzer-Passwort gesetzt wurde und der Login ab sofort greift, oder
+    // wenn eine bestehende Sitzung abgelaufen ist.
+    onUnauthorized(() => {
+      setCurrentUser(null);
+      setAuthStatus("login");
+    });
+    api.getMe().then(({ authRequired, user }) => {
+      if (authRequired && !user) {
+        setAuthStatus("login");
+        return;
+      }
+      setCurrentUser(user || null);
+      setAuthStatus("ready");
+      loadBoard();
+    });
   }, []);
+
+  function handleLoggedIn(user) {
+    setCurrentUser(user);
+    setAuthStatus("ready");
+    loadBoard();
+  }
+
+  async function handleLogout() {
+    await api.logout();
+    // Einfachster, sicherer Weg alle geladenen Daten wieder loszuwerden.
+    window.location.reload();
+  }
 
   async function handleAddUser(name, extra) {
     const user = await api.createUser(name, extra);
@@ -157,8 +196,21 @@ export default function App() {
             Archiv
           </button>
         </nav>
+        {currentUser && (
+          <button className="site-menu-item logout-btn" onClick={handleLogout} title={currentUser.email || ""}>
+            {currentUser.name} · Abmelden
+          </button>
+        )}
       </div>
     );
+  }
+
+  if (authStatus === "loading") {
+    return <div className="loading">Lade...</div>;
+  }
+
+  if (authStatus === "login") {
+    return <LoginForm onLoggedIn={handleLoggedIn} />;
   }
 
   return (

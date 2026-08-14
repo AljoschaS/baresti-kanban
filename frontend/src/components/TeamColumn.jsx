@@ -17,11 +17,17 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("#0052CC");
   const [newAvatar, setNewAvatar] = useState(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [addError, setAddError] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [editingColor, setEditingColor] = useState("#0052CC");
   const [editingAvatar, setEditingAvatar] = useState(null);
+  const [editingEmail, setEditingEmail] = useState("");
+  const [editingPassword, setEditingPassword] = useState("");
+  const [editError, setEditError] = useState(null);
 
   // cropTarget: "new" oder eine Nutzer-ID, damit der Cropper weiss,
   // wessen Avatar-State er nach dem Zuschneiden befuellen soll.
@@ -44,14 +50,26 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
     setCropTarget(null);
   }
 
-  function submitNewUser(e) {
+  async function submitNewUser(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    onAddUser(newName.trim(), { color: newColor, avatar: newAvatar });
-    setNewName("");
-    setNewColor("#0052CC");
-    setNewAvatar(null);
-    setAdding(false);
+    setAddError(null);
+    try {
+      await onAddUser(newName.trim(), {
+        color: newColor,
+        avatar: newAvatar,
+        email: newEmail.trim(),
+        password: newPassword,
+      });
+      setNewName("");
+      setNewColor("#0052CC");
+      setNewAvatar(null);
+      setNewEmail("");
+      setNewPassword("");
+      setAdding(false);
+    } catch (err) {
+      setAddError(err.message);
+    }
   }
 
   function startEdit(user) {
@@ -59,13 +77,27 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
     setEditingName(user.name);
     setEditingColor(user.color || "#0052CC");
     setEditingAvatar(user.avatar || null);
+    setEditingEmail(user.email || "");
+    setEditingPassword("");
+    setEditError(null);
   }
 
-  function submitEdit(e) {
+  async function submitEdit(e) {
     e.preventDefault();
     if (!editingName.trim()) return;
-    onUpdateUser(editingId, { name: editingName.trim(), color: editingColor, avatar: editingAvatar });
-    setEditingId(null);
+    setEditError(null);
+    try {
+      await onUpdateUser(editingId, {
+        name: editingName.trim(),
+        color: editingColor,
+        avatar: editingAvatar,
+        email: editingEmail.trim(),
+        password: editingPassword,
+      });
+      setEditingId(null);
+    } catch (err) {
+      setEditError(err.message);
+    }
   }
 
   return (
@@ -109,6 +141,20 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
                   onChange={(e) => setEditingColor(e.target.value)}
                 />
               </div>
+              <input
+                type="email"
+                value={editingEmail}
+                onChange={(e) => setEditingEmail(e.target.value)}
+                placeholder="E-Mail (fuer Login)"
+              />
+              <input
+                type="password"
+                value={editingPassword}
+                onChange={(e) => setEditingPassword(e.target.value)}
+                placeholder="Neues Passwort (leer = unveraendert)"
+                autoComplete="new-password"
+              />
+              {editError && <div className="login-error">{editError}</div>}
               <div className="add-card-actions">
                 <button type="submit">Speichern</button>
                 <button type="button" onClick={() => setEditingId(null)}>
@@ -174,6 +220,20 @@ export default function TeamColumn({ users, onAddUser, onUpdateUser, onDeleteUse
             <label>Farbe</label>
             <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} />
           </div>
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="E-Mail (fuer Login, optional)"
+          />
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Passwort (optional)"
+            autoComplete="new-password"
+          />
+          {addError && <div className="login-error">{addError}</div>}
           <div className="add-card-actions">
             <button type="submit">Hinzufuegen</button>
             <button type="button" onClick={() => setAdding(false)}>

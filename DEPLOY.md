@@ -1,11 +1,11 @@
 # Kanban Board online stellen (fuer Kollegen erreichbar machen)
 
 Diese Anleitung bringt das Board von "läuft nur auf meinem Rechner" zu
-"überall erreichbar über einen Link, geschützt mit einem gemeinsamen
-Passwort". Empfohlene Plattform: **Railway** (railway.app) - einfache
-Oberfläche, unterstützt dauerhafte Speicherung (Volumes), kostenpflichtig ab
-ein paar Euro im Monat je nach Nutzung. Render.com funktioniert nach dem
-gleichen Prinzip als Alternative.
+"überall erreichbar über einen Link, mit individuellem Login pro Person".
+Empfohlene Plattform: **Railway** (railway.app) - einfache Oberfläche,
+unterstützt dauerhafte Speicherung (Volumes), kostenpflichtig ab ein paar
+Euro im Monat je nach Nutzung. Render.com funktioniert nach dem gleichen
+Prinzip als Alternative.
 
 Die folgenden Schritte mit Konto-Erstellung und Bezahlung musst du selbst
 machen (das kann ich nicht für dich übernehmen) - alles andere ist bereits
@@ -47,22 +47,42 @@ aufgesetzt wird.
 2. Unter **Variables** (Umgebungsvariablen) hinzufügen:
    - `DATA_DIR` = `/data`
 
-## 4. Passwortschutz einrichten
+## 4. Login-Schlüssel setzen
 
-Ebenfalls unter **Variables**:
+Jede Person meldet sich künftig mit eigener E-Mail + eigenem Passwort an
+(siehe unten). Damit die Anmelde-Sitzungen sicher signiert sind, unter
+**Variables** noch hinzufügen:
 
-- `BASIC_AUTH_USER` = z.B. `baresti`
-- `BASIC_AUTH_PASS` = ein Passwort eurer Wahl (das teilst du deinen
-  Kolleg:innen mit)
+- `JWT_SECRET` = eine lange, zufällige Zeichenfolge (z.B. mit einem
+  Passwort-Generator erzeugt, mind. 32 Zeichen). Ohne diese Variable läuft
+  ein unsicherer Standardwert - für echtes Hosting unbedingt setzen.
 
-Ohne diese zwei Variablen läuft das Board ganz ohne Login - lokal beim
-Entwickeln ist das so gewollt, online sollten sie aber gesetzt sein.
+Falls von einem früheren Setup noch `BASIC_AUTH_USER`/`BASIC_AUTH_PASS`
+gesetzt sind: können entfernt werden, sie werden nicht mehr verwendet.
 
-## 5. Fertig
+## 5. Zugänge für dich und deine Kolleg:innen anlegen
+
+Solange noch niemand ein Passwort hat, ist das Board nach dem Deploy erstmal
+ganz normal ohne Login nutzbar (wie lokal beim Entwickeln) - so lässt sich
+in Ruhe alles einrichten:
+
+1. Board öffnen, oben rechts auf **Team** klicken.
+2. Bei jeder Person (auch bei dir selbst) **Bearbeiten** → E-Mail und ein
+   Passwort eintragen → Speichern.
+3. Sobald die erste Person ein Passwort hat, verlangt das Board ab diesem
+   Moment für **jede** weitere Aktion einen Login - auch von dir. Falls das
+   mitten beim Einrichten passiert (z.B. du hast gerade erst dein eigenes
+   Passwort gesetzt und willst als nächstes Kolleg:innen eintragen), zeigt
+   das Board automatisch den Login-Bildschirm - einfach mit dem gerade
+   gesetzten Zugang anmelden und weiter Personen eintragen.
+4. Die fertigen Zugänge (E-Mail + Passwort) an die jeweilige Person
+   weitergeben.
+
+## 6. Fertig
 
 Railway zeigt dir eine öffentliche URL (z.B. `baresti-kanban.up.railway.app`).
-Diesen Link zusammen mit Benutzername/Passwort an deine Kolleg:innen
-weitergeben - fertig.
+Diesen Link an deine Kolleg:innen weitergeben, jede Person meldet sich dort
+mit der eigenen E-Mail + dem eigenen Passwort an - fertig.
 
 ## Spätere Änderungen
 

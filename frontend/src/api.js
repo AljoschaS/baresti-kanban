@@ -10,20 +10,51 @@ export function resolveFileUrl(url) {
   return url.startsWith("http") ? url : `${API_ORIGIN}${url}`;
 }
 
+// Wird von App.jsx einmal registriert, damit die App auf ein ploetzliches
+// 401 (z.B. Sitzung abgelaufen, oder waehrend des Einrichtens wurde gerade
+// das erste Passwort im Team gesetzt und der Login greift ab sofort) reagieren
+// und den Login-Bildschirm zeigen kann - statt nur eine kryptische Fehlermeldung.
+let unauthorizedHandler = null;
+export function onUnauthorized(handler) {
+  unauthorizedHandler = handler;
+}
+
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
+    // Noetig, damit das Login-Cookie mitgeschickt wird (auch im Dev-Betrieb
+    // ueber unterschiedliche Ports hinweg).
+    credentials: "include",
     ...options,
   });
+  if (res.status === 401 && path !== "/me" && path !== "/login") {
+    unauthorizedHandler?.();
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request fehlgeschlagen: ${res.status}`);
+    const err = new Error(body.error || `Request fehlgeschlagen: ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
   if (res.status === 204) return null;
   return res.json();
 }
 
 export const api = {
+  // Liefert immer ein Ergebnis, wirft nie: {authRequired, user} bei Erfolg,
+  // {authRequired: true, user: null} wenn (noch) nicht eingeloggt.
+  getMe: async () => {
+    try {
+      return await request("/me");
+    } catch (err) {
+      if (err.status === 401) return { authRequired: true, user: null };
+      throw err;
+    }
+  },
+  login: (email, password) =>
+    request("/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => request("/logout", { method: "POST" }),
+
   getBoard: () => request("/board"),
 
   createList: (title) =>
