@@ -219,7 +219,10 @@ function normalizeAssignees(assignees, db) {
 // Bootstrap-Phase/beim Login-Vorgang direkt ein Nutzer-Objekt/null.
 // Bewusst NICHT fuer reine Positions-/Reihenfolge-Aenderungen aufgerufen,
 // sonst wuerde jedes Verschieben per Drag&Drop das Journal zuspammen.
-function logActivity(db, actor, action, summary) {
+// extra kann z.B. { cardTitle } enthalten - fuer projektbezogene Aktionen,
+// damit im Journal spaeter nach Projektname gefiltert werden kann, ohne den
+// Freitext der summary parsen zu muessen.
+function logActivity(db, actor, action, summary, extra = {}) {
   if (!db.activityLog) db.activityLog = [];
   db.activityLog.push({
     id: nextId(db.activityLog),
@@ -228,6 +231,7 @@ function logActivity(db, actor, action, summary) {
     userName: actor ? actor.name : "System",
     action,
     summary,
+    ...extra,
   });
   // Nicht unbegrenzt wachsen lassen.
   if (db.activityLog.length > 2000) {
@@ -275,10 +279,25 @@ app.get("/api/board", (req, res) => {
 });
 
 // --- Journal: Aktivitaets-Historie (wer hat wann was gemacht) ---
+// Unterstuetzt optionale Filter per Query-Parameter:
+//   from/to   - ISO-Zeitstempel, grenzen den Zeitraum ein (jeweils inklusive)
+//   userId    - nur Eintraege dieser Person
+//   project   - Freitext-Suche im Projektnamen (falls die Aktion einem Projekt zugeordnet ist)
 app.get("/api/activity", (req, res) => {
   const db = readDB();
-  const entries = [...(db.activityLog || [])].sort((a, b) => b.id - a.id).slice(0, 500);
-  res.json({ entries });
+  const { from, to, userId, project } = req.query;
+  let entries = [...(db.activityLog || [])];
+
+  if (from) entries = entries.filter((e) => e.ts >= from);
+  if (to) entries = entries.filter((e) => e.ts <= to);
+  if (userId) entries = entries.filter((e) => String(e.userId) === String(userId));
+  if (project && project.trim()) {
+    const needle = project.trim().toLowerCase();
+    entries = entries.filter((e) => (e.cardTitle || "").toLowerCase().includes(needle));
+  }
+
+  entries.sort((a, b) => b.id - a.id);
+  res.json({ entries: entries.slice(0, 500) });
 });
 
 // --- Tags: verwaltbare Tag-Definitionen (Label + Farbe) ---
@@ -537,7 +556,7 @@ app.post("/api/cards", (req, res) => {
   }));
   db.tokens.push(...newTokens);
 
-  logActivity(db, req.user, "card.create", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" angelegt`);
+  logActivity(db, req.user, "card.create", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" angelegt`, { cardTitle: newCard.title });
   writeDB(db);
   res.status(201).json({ card: newCard, tokens: newTokens });
 });
@@ -612,7 +631,8 @@ app.patch("/api/cards/:id", (req, res) => {
       db,
       req.user,
       "card.update",
-      `${req.user?.name || "Jemand"} hat bei "${card.title}" ${changedParts.join(", ")} geaendert`
+      `${req.user?.name || "Jemand"} hat bei "${card.title}" ${changedParts.join(", ")} geaendert`,
+      { cardTitle: card.title }
     );
   }
   writeDB(db);
@@ -630,7 +650,7 @@ app.delete("/api/cards/:id", (req, res) => {
   db.tokens = db.tokens.filter((t) => t.cardId !== id);
   db.attachments = db.attachments.filter((a) => a.cardId !== id);
   if (card) {
-    logActivity(db, req.user, "card.delete", `${req.user?.name || "Jemand"} hat das Projekt "${card.title}" geloescht`);
+    logActivity(db, req.user, "card.delete", `${req.user?.name || "Jemand"} hat das Projekt "${card.title}" geloescht`, { cardTitle: card.title });
   }
   writeDB(db);
   res.status(204).end();
@@ -677,7 +697,7 @@ app.post("/api/cards/:id/archive", (req, res) => {
   db.tokens = db.tokens.filter((t) => t.cardId !== id);
   db.attachments = db.attachments.filter((a) => a.cardId !== id);
 
-  logActivity(db, req.user, "card.archive", `${req.user?.name || "Jemand"} hat das Projekt "${archived.title}" archiviert`);
+  logActivity(db, req.user, "card.archive", `${req.user?.name || "Jemand"} hat das Projekt "${archived.title}" archiviert`, { cardTitle: archived.title });
   writeDB(db);
   res.status(201).json(archived);
 });
@@ -737,7 +757,7 @@ app.post("/api/archive/:id/restore", (req, res) => {
 
   db.archivedProjects.splice(archivedIndex, 1);
 
-  logActivity(db, req.user, "card.restore", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" aus dem Archiv wiederhergestellt`);
+  logActivity(db, req.user, "card.restore", `${req.user?.name || "Jemand"} hat das Projekt "${newCard.title}" aus dem Archiv wiederhergestellt`, { cardTitle: newCard.title });
   writeDB(db);
   res.status(201).json({ card: newCard, tokens: newTokens, attachments: newAttachments });
 });
@@ -755,7 +775,7 @@ app.delete("/api/archive/:id", (req, res) => {
     .forEach((a) => deleteUploadedFile(a.url));
 
   db.archivedProjects = db.archivedProjects.filter((p) => p.id !== id);
-  logActivity(db, req.user, "card.delete_archived", `${req.user?.name || "Jemand"} hat das archivierte Projekt "${archived.title}" endgueltig geloescht`);
+  logActivity(db, req.user, "card.delete_archived", `${req.user?.name || "Jemand"} hat das archivierte Projekt "${archived.title}" endgueltig geloescht`, { cardTitle: archived.title });
   writeDB(db);
   res.status(204).end();
 });
@@ -789,7 +809,7 @@ app.post("/api/cards/:cardId/attachments", (req, res) => {
       url: url.trim(),
     };
     db.attachments.push(attachment);
-    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat den Link "${attachment.label}" zu "${card.title}" hinzugefuegt`);
+    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat den Link "${attachment.label}" zu "${card.title}" hinzugefuegt`, { cardTitle: card.title });
     writeDB(db);
     return res.status(201).json(attachment);
   }
@@ -815,7 +835,7 @@ app.post("/api/cards/:cardId/attachments", (req, res) => {
       size: buffer.length,
     };
     db.attachments.push(attachment);
-    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat die Datei "${attachment.label}" zu "${card.title}" hinzugefuegt`);
+    logActivity(db, req.user, "attachment.add", `${req.user?.name || "Jemand"} hat die Datei "${attachment.label}" zu "${card.title}" hinzugefuegt`, { cardTitle: card.title });
     writeDB(db);
     return res.status(201).json(attachment);
   }
@@ -833,7 +853,7 @@ app.delete("/api/attachments/:id", (req, res) => {
   db.attachments = db.attachments.filter((a) => a.id !== id);
   if (attachment) {
     const card = db.cards.find((c) => c.id === attachment.cardId);
-    logActivity(db, req.user, "attachment.delete", `${req.user?.name || "Jemand"} hat den Anhang "${attachment.label}" von "${card?.title || "?"}" entfernt`);
+    logActivity(db, req.user, "attachment.delete", `${req.user?.name || "Jemand"} hat den Anhang "${attachment.label}" von "${card?.title || "?"}" entfernt`, { cardTitle: card?.title });
   }
   writeDB(db);
   res.status(204).end();
@@ -861,7 +881,8 @@ app.patch("/api/tokens/:id", (req, res) => {
       db,
       req.user,
       "token.move",
-      `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" von "${oldList?.title || "?"}" nach "${newList?.title || "?"}" verschoben`
+      `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" von "${oldList?.title || "?"}" nach "${newList?.title || "?"}" verschoben`,
+      { cardTitle: card?.title }
     );
   }
   if (position !== undefined) token.position = position;
@@ -869,7 +890,7 @@ app.patch("/api/tokens/:id", (req, res) => {
     if (assigneeId === null) {
       if (token.assigneeId != null) {
         const prevUser = db.users.find((u) => u.id === token.assigneeId);
-        logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat die Zuweisung von "${tagLabel}" bei "${card?.title || "?"}"${prevUser ? ` (${prevUser.name})` : ""} entfernt`);
+        logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat die Zuweisung von "${tagLabel}" bei "${card?.title || "?"}"${prevUser ? ` (${prevUser.name})` : ""} entfernt`, { cardTitle: card?.title });
       }
       token.assigneeId = null;
     } else {
@@ -879,7 +900,7 @@ app.patch("/api/tokens/:id", (req, res) => {
       }
       token.assigneeId = assigneeId;
       const newUser = db.users.find((u) => u.id === assigneeId);
-      logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" ${newUser ? newUser.name : "jemandem"} zugewiesen`);
+      logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" ${newUser ? newUser.name : "jemandem"} zugewiesen`, { cardTitle: card?.title });
     }
   }
 
@@ -895,7 +916,7 @@ app.delete("/api/tokens/:id", (req, res) => {
   if (token) {
     const card = db.cards.find((c) => c.id === token.cardId);
     const tagLabel = token.tagLabel || getTagLabelFallback(db, token.tagKey);
-    logActivity(db, req.user, "token.delete", `${req.user?.name || "Jemand"} hat "${tagLabel}" von "${card?.title || "?"}" entfernt`);
+    logActivity(db, req.user, "token.delete", `${req.user?.name || "Jemand"} hat "${tagLabel}" von "${card?.title || "?"}" entfernt`, { cardTitle: card?.title });
   }
   writeDB(db);
   res.status(204).end();

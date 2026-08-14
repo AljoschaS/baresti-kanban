@@ -351,6 +351,31 @@
   margin: 16px 24px;
 }
 
+.journal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #dfe1e6;
+  background: #fafbfc;
+}
+
+.journal-reset-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #42526e;
+  cursor: pointer;
+  height: fit-content;
+}
+
+.journal-reset-btn:hover {
+  background: #f4f5f7;
+}
+
 .journal-header {
   display: flex;
   align-items: center;
@@ -431,7 +456,8 @@
   letter-spacing: 0.03em;
 }
 
-.responsible-filter-field input {
+.responsible-filter-field input,
+.responsible-filter-field select {
   font-weight: normal;
   text-transform: none;
   letter-spacing: normal;
@@ -440,6 +466,9 @@
   border-radius: 4px;
   font-size: 13px;
   min-width: 180px;
+  font-family: inherit;
+  color: #172b4d;
+  background: #fff;
 }
 
 .filter-empty-hint {

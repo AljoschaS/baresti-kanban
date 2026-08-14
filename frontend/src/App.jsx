@@ -296,7 +296,7 @@ export default function App() {
             <div className="filter-bar-row filter-bar-row-end">
               <TopBarExtras />
             </div>
-            <JournalPage />
+            <JournalPage users={users} />
           </>
         )}
       </div>

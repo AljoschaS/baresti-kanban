@@ -31,6 +31,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 
 - Seitenlayout: volle Breite fuer den Inhalt, oben eine Topbar mit Suchfeldern, Team-/Tags-Dropdowns und Seiten-Menue
 - Menuepunkt "Kanban" zeigt das Board, "Archiv" zeigt alle archivierten Projekte, "Journal" zeigt eine Aktivitaets-Historie (wer hat wann was gemacht: Projekte/Tags/Team/Spalten anlegen, bearbeiten, loeschen; Tags zwischen Spalten verschieben oder zuweisen; An-/Abmelden). Reine Positions-/Umsortierungs-Aenderungen per Drag&Drop werden bewusst nicht geloggt, um das Journal nicht zuzuspammen
+- Das Journal laesst sich filtern: Zeitraum (Von/Bis mit Datum+Uhrzeit), Person und Projektname - auch kombinierbar, filtert serverseitig auch in weiter zurueckliegenden Eintraegen
 - Sobald alle Tags eines Projekts in der Spalte "Umgesetzt" liegen, erscheint dort unten ein roter "Archivieren"-Button; ein Klick speichert Titel, Start-/Ziel-Datum, Archivierungsdatum, Tags, Zustaendige, Beschreibung/Bemerkungen und alle Anhaenge (Dateien/Links) im Archiv und entfernt das Projekt vom Board
 - Im Archiv kann jedes Projekt per "Wiederherstellen"-Button zurueck aufs Board geholt werden: es landet frisch in der "Projekte"-Liste (neues Start-Datum, kein Ziel-Datum), die Tags starten wieder in der ersten Arbeits-Spalte - Titel, Zustaendige, Beschreibung und Anhaenge bleiben erhalten
 - Archivierte Projekte lassen sich per Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen, inklusive hochgeladener Anhaenge
