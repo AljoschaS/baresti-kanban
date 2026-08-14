@@ -120,10 +120,11 @@ export default function App() {
     }
   }
 
-  return (
-    <div className="page-shell">
-      <nav className="site-menu">
-        <div className="site-menu-label">Menu</div>
+  // Menue (Kanban/Archiv) steht jetzt rechts neben der Suchleiste statt in
+  // einer eigenen linken Spalte - spart Platz auf schmaleren Bildschirmen.
+  function SiteMenu() {
+    return (
+      <nav className="site-menu-inline">
         <button
           className={"site-menu-item" + (page === "kanban" ? " active" : "")}
           onClick={() => setPage("kanban")}
@@ -137,7 +138,11 @@ export default function App() {
           Archiv
         </button>
       </nav>
+    );
+  }
 
+  return (
+    <div className="page-shell">
       <div className="app">
         <header className="app-header">
           <h1>{page === "archiv" ? "Archiv" : "Baresti GmbH"}</h1>
@@ -155,6 +160,7 @@ export default function App() {
                 onMainChange={setKanbanMainFilter}
                 onSecondaryChange={setKanbanSecondaryFilter}
               />
+              <SiteMenu />
             </div>
             <div className="kanban-frame">
               <div className="app-main">
@@ -197,6 +203,7 @@ export default function App() {
                 onMainChange={setArchivMainFilter}
                 onSecondaryChange={setArchivSecondaryFilter}
               />
+              <SiteMenu />
             </div>
             <ArchivPage
               archive={archive}
