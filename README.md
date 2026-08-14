@@ -61,9 +61,11 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Fertig vorbereitet fuers Hosting: individueller Login je Person, ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
 - Dark/Light-Modus: Sonne/Mond-Button ganz oben rechts in der Topbar schaltet um; die Wahl wird gemerkt (auch nach Neuladen), startet sonst nach der Systemeinstellung
 
+- Schreibzugriffe auf `db.json` laufen ueber eine interne Warteschlange und werden strikt nacheinander abgearbeitet, nie parallel – verhindert, dass bei gleichzeitigen Aenderungen mehrerer Personen eine Aenderung durch eine andere ueberschrieben wird ("Lost Update")
+
 ## Naechste sinnvolle Schritte
 
-- **Echte Datenbank** statt JSON-Datei (wichtig, sobald mehrere Leute gleichzeitig arbeiten – JSON-Datei ist nicht nebenlaeufig-sicher)
+- **Echte Datenbank** statt JSON-Datei (SQLite oder PostgreSQL) – waere fuer richtig hohe Datenmengen/Wachstum langfristig robuster; fuer die aktuelle Groesse reicht die Schreib-Warteschlange oben aber bereits als Absicherung gegen gleichzeitige Aenderungen
 
 ## Projektstruktur
 

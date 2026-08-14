@@ -103,6 +103,37 @@ app.use(cors({ origin: true, credentials: true }));
 // Hoeheres Limit, da Profilbilder/Datei-Anhaenge als Base64-Text im JSON-Body mitgeschickt werden.
 app.use(express.json({ limit: "8mb" }));
 
+// Alle schreibenden Anfragen (POST/PATCH/DELETE/PUT) werden strikt
+// nacheinander abgearbeitet, nie parallel - so kann nie eine Anfrage einen
+// aelteren Stand von db.json lesen, waehrend eine andere Anfrage gerade eine
+// neuere Version geschrieben hat ("Lost Update"). Aktuell sind alle Routen
+// komplett synchron und daher schon von Natur aus sicher (Node fuehrt
+// synchronen Code nie ueberlappend aus) - diese Warteschlange schuetzt aber
+// zuverlaessig auch vor kuenftigen Aenderungen (z.B. asynchrone
+// Bildverarbeitung oder E-Mail-Versand), ohne dass man das bei jeder neuen
+// Route selbst im Kopf behalten muss.
+let writeQueue = Promise.resolve();
+app.use((req, res, next) => {
+  if (req.method === "GET") return next();
+  writeQueue = writeQueue.then(
+    () =>
+      new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          resolve();
+        };
+        res.on("finish", finish);
+        res.on("close", finish);
+        // Sicherheitsnetz: falls eine Antwort aus irgendeinem Grund nie
+        // endet, blockiert das nicht dauerhaft alle folgenden Schreibzugriffe.
+        setTimeout(finish, 30000);
+        next();
+      })
+  );
+});
+
 app.post("/api/login", (req, res) => {
   const db = readDB();
   const email = normalizeEmail(req.body.email);
