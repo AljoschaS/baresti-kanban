@@ -44,6 +44,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Neues Projekt anlegen ueber "+ Projekt" unten in der Zeilen-Ansicht, mit Titel, Tags und zugewiesenen Personen
 - Jedem Projekt koennen mehrere Tags gleichzeitig zugewiesen werden; "Sonstiges" erlaubt zusaetzlich einen frei eingebbaren Text pro Zuweisung
 - Jedem einzelnen Tag laesst sich oben links eine Person zuweisen (Auswahl beschraenkt auf Haupt- und Nebenverantwortliche des Projekts); wird eine Person vom Projekt entfernt oder ganz geloescht, verliert der Tag automatisch diese Zuweisung
+- Jeder einzelne Tag kann zusaetzlich eine freie Notiz/Bemerkung bekommen: kleines Symbol unten rechts am Tag oeffnet ein kleines Notizfeld; ist eine Notiz hinterlegt, wird das Symbol hervorgehoben und zeigt beim Ueberfahren den Text als Tooltip
 - Team und Tags sind als Dropdown-Menues oben rechts in der Topbar erreichbar (mit Anzahl-Badge): Nutzer bzw. Tags anzeigen, hinzufuegen, umbenennen, Farbe aendern. Loeschen eines Tags entfernt ihn ueberall (von allen Projekten und offenen Tag-Karten auf dem Board)
 - Karten bearbeiten (Titel, Beschreibung, Tags, Personen nachtraeglich aendern/ergaenzen)
 - Oben rechts an jeder Projektkarte kann man sie ueber ein kleines Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen

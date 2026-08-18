@@ -584,6 +584,7 @@ app.post("/api/cards", (req, res) => {
     listId: targetListId,
     position: itemCountInList(db, targetListId) + i,
     assigneeId: null,
+    note: null,
   }));
   db.tokens.push(...newTokens);
 
@@ -652,6 +653,7 @@ app.patch("/api/cards/:id", (req, res) => {
         listId: targetListId,
         position: itemCountInList(db, targetListId) + i,
         assigneeId: null,
+        note: null,
       }));
       db.tokens.push(...newTokens);
     }
@@ -897,7 +899,7 @@ app.patch("/api/tokens/:id", (req, res) => {
   const token = db.tokens.find((t) => t.id === id);
   if (!token) return res.status(404).json({ error: "Token nicht gefunden" });
 
-  const { listId, position, assigneeId } = req.body;
+  const { listId, position, assigneeId, note } = req.body;
   const card = db.cards.find((c) => c.id === token.cardId);
   const tagLabel = token.tagLabel || getTagLabelFallback(db, token.tagKey);
 
@@ -932,6 +934,17 @@ app.patch("/api/tokens/:id", (req, res) => {
       token.assigneeId = assigneeId;
       const newUser = db.users.find((u) => u.id === assigneeId);
       logActivity(db, req.user, "token.assignee", `${req.user?.name || "Jemand"} hat "${tagLabel}" bei "${card?.title || "?"}" ${newUser ? newUser.name : "jemandem"} zugewiesen`, { cardTitle: card?.title });
+    }
+  }
+  if (note !== undefined) {
+    const cleanNote = (note || "").trim() || null;
+    if (cleanNote !== token.note) {
+      token.note = cleanNote;
+      if (cleanNote) {
+        logActivity(db, req.user, "token.note", `${req.user?.name || "Jemand"} hat eine Notiz zu "${tagLabel}" bei "${card?.title || "?"}" hinterlegt`, { cardTitle: card?.title });
+      } else {
+        logActivity(db, req.user, "token.note", `${req.user?.name || "Jemand"} hat die Notiz zu "${tagLabel}" bei "${card?.title || "?"}" entfernt`, { cardTitle: card?.title });
+      }
     }
   }
 

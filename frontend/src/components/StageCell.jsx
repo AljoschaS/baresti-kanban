@@ -7,7 +7,7 @@ import TagToken from "./TagToken";
 // nur innerhalb derselben Projekt-Zeile in andere Zellen verschoben werden.
 // In der fixierten "Umgesetzt"-Spalte kann zusaetzlich ein "Archivieren"-Button
 // erscheinen, sobald alle Tags des Projekts hier angekommen sind.
-export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, showArchiveButton, onArchive, cardAssignees, users, onAssigneeChange }) {
+export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, showArchiveButton, onArchive, cardAssignees, users, onAssigneeChange, onNoteChange }) {
   const { setNodeRef } = useDroppable({
     id: `cell-${cardId}-${list.id}`,
     data: { type: "cell", cardId, listId: list.id },
@@ -28,6 +28,7 @@ export default function StageCell({ cardId, list, tokens, tags, onDeleteToken, s
               cardAssignees={cardAssignees}
               users={users}
               onAssigneeChange={onAssigneeChange}
+              onNoteChange={onNoteChange}
             />
           ))}
         </SortableContext>

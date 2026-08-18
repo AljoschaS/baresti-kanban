@@ -350,6 +350,22 @@ export default function Board({
     }
   }
 
+  async function handleNoteChange(tokenId, note) {
+    try {
+      const updated = await api.updateToken(tokenId, { note });
+      setLists((prev) =>
+        prev.map((l) => ({
+          ...l,
+          items: l.items.map((it) =>
+            it.type === "token" && it.id === tokenId ? { ...it, note: updated.note } : it
+          ),
+        }))
+      );
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function handleAddAttachment(cardId, data) {
     const attachment = await api.addAttachment(cardId, data);
     setLists((prev) =>
@@ -466,6 +482,7 @@ export default function Board({
                 users={users}
                 onDeleteToken={handleDeleteToken}
                 onAssigneeChange={handleAssigneeChange}
+                onNoteChange={handleNoteChange}
                 canArchiveCard={canArchiveCard}
                 onArchive={handleArchiveCard}
                 onDeleteCard={handleDeleteCard}

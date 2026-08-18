@@ -15,6 +15,7 @@ export default function ProjectRow({
   users,
   onDeleteToken,
   onAssigneeChange,
+  onNoteChange,
   canArchiveCard,
   onArchive,
   onDeleteCard,
@@ -69,6 +70,7 @@ export default function ProjectRow({
           cardAssignees={card.assignees}
           users={users}
           onAssigneeChange={onAssigneeChange}
+          onNoteChange={onNoteChange}
         />
       ))}
       {pinnedRightList && (
@@ -83,6 +85,7 @@ export default function ProjectRow({
           cardAssignees={card.assignees}
           users={users}
           onAssigneeChange={onAssigneeChange}
+          onNoteChange={onNoteChange}
         />
       )}
       {/* Platzhalter unter der "+ Spalte"-Kopfzelle (jetzt ganz rechts,
