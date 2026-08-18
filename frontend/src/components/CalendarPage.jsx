@@ -126,17 +126,17 @@ export default function CalendarPage({ users = [] }) {
           <div className="calendar-view-toggle">
             <button
               type="button"
-              className={"calendar-view-btn" + (viewMode === "month" ? " active" : "")}
-              onClick={() => setViewMode("month")}
-            >
-              Monat
-            </button>
-            <button
-              type="button"
               className={"calendar-view-btn" + (viewMode === "week" ? " active" : "")}
               onClick={() => setViewMode("week")}
             >
               Woche
+            </button>
+            <button
+              type="button"
+              className={"calendar-view-btn" + (viewMode === "month" ? " active" : "")}
+              onClick={() => setViewMode("month")}
+            >
+              Monat
             </button>
             <button
               type="button"
