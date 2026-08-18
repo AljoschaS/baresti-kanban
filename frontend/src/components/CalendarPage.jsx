@@ -41,10 +41,23 @@ export default function CalendarPage({ users = [] }) {
     setEntries((prev) => [...prev, entry]);
   }
 
+  async function handleAddBulk(userId, segments) {
+    const { entries: created } = await api.createAvailabilityBulk(
+      segments.map((seg) => ({ userId, ...seg }))
+    );
+    setEntries((prev) => [...prev, ...created]);
+  }
+
   async function handleDelete(entryId) {
     if (!confirm("Diesen Zeitraum wirklich entfernen?")) return;
     await api.deleteAvailability(entryId);
     setEntries((prev) => prev.filter((e) => e.id !== entryId));
+  }
+
+  async function handleDeleteSeries(seriesId) {
+    if (!confirm("Alle Zeitraeume dieser Serie wirklich entfernen?")) return;
+    await api.deleteAvailabilitySeries(seriesId);
+    setEntries((prev) => prev.filter((e) => e.seriesId !== seriesId));
   }
 
   function goToday() {
@@ -105,7 +118,9 @@ export default function CalendarPage({ users = [] }) {
             user={user}
             entries={entries.filter((e) => e.userId === user.id)}
             onAdd={handleAdd}
+            onAddBulk={handleAddBulk}
             onDelete={handleDelete}
+            onDeleteSeries={handleDeleteSeries}
           />
         ))}
       </aside>

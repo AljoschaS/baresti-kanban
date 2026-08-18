@@ -1744,6 +1744,7 @@
 }
 
 .calendar-add-field input,
+.calendar-add-field select,
 .calendar-add-title {
   padding: 5px 6px;
   border: 1px solid var(--color-border);
@@ -1752,6 +1753,20 @@
   font-family: inherit;
   color: var(--color-text);
   background: var(--color-surface);
+}
+
+.calendar-repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.calendar-repeat-row input {
+  margin: 0;
 }
 
 .calendar-add-error {
@@ -1854,6 +1869,13 @@
   white-space: nowrap;
 }
 
+.calendar-entry-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .calendar-entry-delete {
   flex-shrink: 0;
   border: none;
@@ -1866,6 +1888,24 @@
 
 .calendar-entry-delete:hover {
   color: var(--color-danger);
+}
+
+.calendar-entry-delete-series {
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.calendar-entry-delete-series:hover {
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
 }
 
 .calendar-main {

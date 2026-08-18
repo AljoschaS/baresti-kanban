@@ -1030,6 +1030,7 @@ app.post("/api/availability", (req, res) => {
     start,
     end,
     title: (title || "").trim(),
+    seriesId: null,
   };
   db.availability.push(entry);
   logActivity(
@@ -1040,6 +1041,71 @@ app.post("/api/availability", (req, res) => {
   );
   writeDB(db);
   res.status(201).json(entry);
+});
+
+// Legt mehrere Zeitraeume auf einmal an, die als zusammengehoerige "Serie"
+// markiert werden (gemeinsame seriesId) - fuer vordefinierte Zeitraeume
+// (die aus mehreren Bloecken bestehen, z.B. Rufbereitschaft Mo-Fr) und fuer
+// woechentliche Wiederholungen. So laesst sich die ganze Serie spaeter mit
+// einem Klick wieder entfernen, statt jeden Termin einzeln loeschen zu muessen.
+app.post("/api/availability/bulk", (req, res) => {
+  const db = readDB();
+  if (!db.availability) db.availability = [];
+  const rawEntries = req.body.entries;
+  if (!Array.isArray(rawEntries) || rawEntries.length === 0) {
+    return res.status(400).json({ error: "entries darf nicht leer sein" });
+  }
+  if (rawEntries.length > 500) {
+    return res.status(400).json({ error: "Zu viele Zeitraeume auf einmal (max. 500)" });
+  }
+  const created = [];
+  const seriesId = `s${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  for (const raw of rawEntries) {
+    const { userId, start, end, title } = raw || {};
+    const user = db.users.find((u) => u.id === Number(userId));
+    if (!user) return res.status(400).json({ error: "Teammitglied nicht gefunden" });
+    if (!start || !end) return res.status(400).json({ error: "start und end sind erforderlich" });
+    if (new Date(end).getTime() <= new Date(start).getTime()) {
+      return res.status(400).json({ error: "Ende muss nach dem Start liegen" });
+    }
+    created.push({
+      id: nextId(db.availability) + created.length,
+      userId: user.id,
+      start,
+      end,
+      title: (title || "").trim(),
+      seriesId,
+    });
+  }
+  db.availability.push(...created);
+  const firstUser = db.users.find((u) => u.id === created[0].userId);
+  logActivity(
+    db,
+    req.user,
+    "availability.create_bulk",
+    `${req.user?.name || "Jemand"} hat ${created.length} Zeitraeume fuer ${firstUser?.name || "?"} im Kalender hinzugefuegt (Serie)`
+  );
+  writeDB(db);
+  res.status(201).json({ entries: created });
+});
+
+app.delete("/api/availability/series/:seriesId", (req, res) => {
+  const db = readDB();
+  if (!db.availability) db.availability = [];
+  const seriesId = req.params.seriesId;
+  const toRemove = db.availability.filter((e) => e.seriesId === seriesId);
+  db.availability = db.availability.filter((e) => e.seriesId !== seriesId);
+  if (toRemove.length) {
+    const user = db.users.find((u) => u.id === toRemove[0].userId);
+    logActivity(
+      db,
+      req.user,
+      "availability.delete_bulk",
+      `${req.user?.name || "Jemand"} hat eine Serie von ${toRemove.length} Zeitraeumen fuer ${user?.name || "?"} im Kalender entfernt`
+    );
+  }
+  writeDB(db);
+  res.status(204).end();
 });
 
 app.delete("/api/availability/:id", (req, res) => {

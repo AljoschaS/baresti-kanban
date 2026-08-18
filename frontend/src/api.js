@@ -109,5 +109,9 @@ export const api = {
   getAvailability: () => request("/availability"),
   createAvailability: (data) =>
     request("/availability", { method: "POST", body: JSON.stringify(data) }),
+  createAvailabilityBulk: (entries) =>
+    request("/availability/bulk", { method: "POST", body: JSON.stringify({ entries }) }),
   deleteAvailability: (id) => request(`/availability/${id}`, { method: "DELETE" }),
+  deleteAvailabilitySeries: (seriesId) =>
+    request(`/availability/series/${seriesId}`, { method: "DELETE" }),
 };

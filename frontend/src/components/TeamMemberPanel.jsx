@@ -1,40 +1,108 @@
 import { useState } from "react";
-import { localInputToIso, formatTimeShort } from "../calendarUtils";
+import {
+  localInputToIso,
+  formatTimeShort,
+  buildWeekdayNightPreset,
+  buildWeekendPreset,
+  repeatSegmentsWeekly,
+} from "../calendarUtils";
 import { formatDate } from "../dateUtils";
 
+const PRESETS = {
+  weekdayNights: {
+    label: "Rufbereitschaft Wochentags (Mo-Fr, nur Naechte)",
+    build: buildWeekdayNightPreset,
+  },
+  weekend: {
+    label: "Rufbereitschaft Wochenende (Fr 18 - So 23:59)",
+    build: buildWeekendPreset,
+  },
+};
+
 // Ein Teammitglied in der Kalender-Seitenleiste: Bild/Name, ein Formular um
-// einen neuen Zeitraum (Datum+Uhrzeit von/bis, optionaler Titel) hinzuzufuegen,
-// und darunter ein aufklappbares Dropdown mit allen bereits hinterlegten
-// Zeitraeumen dieser Person (inkl. Loeschen).
-export default function TeamMemberPanel({ user, entries, onAdd, onDelete }) {
+// einen neuen Zeitraum hinzuzufuegen - entweder frei gewaehlt (Datum+Uhrzeit
+// von/bis) oder ueber eine der beiden Vorlagen (Rufbereitschaft Wochentags/
+// Wochenende), optional mit woechentlicher Wiederholung bis zu einem
+// Enddatum - und darunter ein aufklappbares Dropdown mit allen bereits
+// hinterlegten Zeitraeumen dieser Person (inkl. Loeschen, auch serienweise).
+export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDelete, onDeleteSeries }) {
+  const [presetKey, setPresetKey] = useState("");
+  const [presetDate, setPresetDate] = useState("");
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   const [title, setTitle] = useState("");
+  const [repeatEnabled, setRepeatEnabled] = useState(false);
+  const [repeatUntil, setRepeatUntil] = useState("");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [listOpen, setListOpen] = useState(false);
 
   const sortedEntries = [...entries].sort((a, b) => new Date(a.start) - new Date(b.start));
 
+  function resetForm() {
+    setPresetKey("");
+    setPresetDate("");
+    setFromInput("");
+    setToInput("");
+    setTitle("");
+    setRepeatEnabled(false);
+    setRepeatUntil("");
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError(null);
-    const startIso = localInputToIso(fromInput);
-    const endIso = localInputToIso(toInput);
-    if (!startIso || !endIso) {
-      setError("Bitte Von und Bis ausfuellen");
-      return;
+
+    let templateSegments;
+    if (presetKey) {
+      if (!presetDate) {
+        setError("Bitte ein Datum in der Zielwoche waehlen");
+        return;
+      }
+      templateSegments = PRESETS[presetKey].build(new Date(presetDate));
+    } else {
+      const startIso = localInputToIso(fromInput);
+      const endIso = localInputToIso(toInput);
+      if (!startIso || !endIso) {
+        setError("Bitte Von und Bis ausfuellen");
+        return;
+      }
+      if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
+        setError("Ende muss nach dem Start liegen");
+        return;
+      }
+      templateSegments = [{ start: new Date(startIso), end: new Date(endIso) }];
     }
-    if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
-      setError("Ende muss nach dem Start liegen");
-      return;
+
+    let allSegments = templateSegments;
+    if (repeatEnabled) {
+      if (!repeatUntil) {
+        setError("Bitte ein Enddatum fuer die Wiederholung waehlen");
+        return;
+      }
+      allSegments = repeatSegmentsWeekly(templateSegments, new Date(repeatUntil));
     }
+
     setSubmitting(true);
     try {
-      await onAdd(user.id, { start: startIso, end: endIso, title: title.trim() });
-      setFromInput("");
-      setToInput("");
-      setTitle("");
+      if (allSegments.length === 1) {
+        await onAdd(user.id, {
+          start: allSegments[0].start.toISOString(),
+          end: allSegments[0].end.toISOString(),
+          title: title.trim(),
+        });
+      } else {
+        await onAddBulk(
+          user.id,
+          allSegments.map((seg) => ({
+            start: seg.start.toISOString(),
+            end: seg.end.toISOString(),
+            title: title.trim(),
+          }))
+        );
+      }
+      resetForm();
+      setListOpen(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -75,19 +143,57 @@ export default function TeamMemberPanel({ user, entries, onAdd, onDelete }) {
 
       <form className="calendar-add-form" onSubmit={submit}>
         <label className="calendar-add-field">
-          <span>Von</span>
-          <input type="datetime-local" value={fromInput} onChange={(e) => setFromInput(e.target.value)} />
+          <span>Vorlage</span>
+          <select value={presetKey} onChange={(e) => setPresetKey(e.target.value)}>
+            <option value="">Zeitraum frei waehlen</option>
+            {Object.entries(PRESETS).map(([key, preset]) => (
+              <option key={key} value={key}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="calendar-add-field">
-          <span>Bis</span>
-          <input type="datetime-local" value={toInput} onChange={(e) => setToInput(e.target.value)} />
-        </label>
+
+        {presetKey ? (
+          <label className="calendar-add-field">
+            <span>Datum (beliebiger Tag der Zielwoche)</span>
+            <input type="date" value={presetDate} onChange={(e) => setPresetDate(e.target.value)} />
+          </label>
+        ) : (
+          <>
+            <label className="calendar-add-field">
+              <span>Von</span>
+              <input type="datetime-local" value={fromInput} onChange={(e) => setFromInput(e.target.value)} />
+            </label>
+            <label className="calendar-add-field">
+              <span>Bis</span>
+              <input type="datetime-local" value={toInput} onChange={(e) => setToInput(e.target.value)} />
+            </label>
+          </>
+        )}
+
         <input
           className="calendar-add-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Titel/Grund (optional)"
         />
+
+        <label className="calendar-repeat-row">
+          <input
+            type="checkbox"
+            checked={repeatEnabled}
+            onChange={(e) => setRepeatEnabled(e.target.checked)}
+          />
+          <span>Woechentlich wiederholen</span>
+        </label>
+        {repeatEnabled && (
+          <label className="calendar-add-field">
+            <span>Wiederholen bis</span>
+            <input type="date" value={repeatUntil} onChange={(e) => setRepeatUntil(e.target.value)} />
+          </label>
+        )}
+
         {error && <div className="calendar-add-error">{error}</div>}
         <button type="submit" className="calendar-add-btn" disabled={submitting}>
           Hinzufuegen
@@ -114,14 +220,28 @@ export default function TeamMemberPanel({ user, entries, onAdd, onDelete }) {
                   <span className="calendar-entry-range">{formatEntryRange(entry)}</span>
                   {entry.title && <span className="calendar-entry-title">{entry.title}</span>}
                 </div>
-                <button
-                  type="button"
-                  className="calendar-entry-delete"
-                  onClick={() => onDelete(entry.id)}
-                  aria-label="Zeitraum entfernen"
-                >
-                  x
-                </button>
+                <div className="calendar-entry-item-actions">
+                  {entry.seriesId && (
+                    <button
+                      type="button"
+                      className="calendar-entry-delete-series"
+                      onClick={() => onDeleteSeries(entry.seriesId)}
+                      aria-label="Ganze Serie entfernen"
+                      title="Ganze Serie entfernen"
+                    >
+                      Serie
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="calendar-entry-delete"
+                    onClick={() => onDelete(entry.id)}
+                    aria-label="Nur diesen Zeitraum entfernen"
+                    title="Nur diesen Zeitraum entfernen"
+                  >
+                    x
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
