@@ -38,8 +38,10 @@ export default function Board({
 
   const [addingProject, setAddingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState("");
+  const [newProjectDescription, setNewProjectDescription] = useState("");
   const [newProjectTags, setNewProjectTags] = useState([]);
   const [newProjectAssignees, setNewProjectAssignees] = useState([]);
+  const [newProjectTargetDate, setNewProjectTargetDate] = useState("");
 
   // Fuer die DragOverlay: waehrend des Ziehens bleibt so ein sichtbares
   // Abbild des Tags/der Spalte staendig am Mauszeiger, statt erst beim
@@ -255,8 +257,8 @@ export default function Board({
     setActiveRow(null);
   }
 
-  async function handleAddCard(listId, title, tags, assignees) {
-    const { card, tokens = [] } = await api.createCard(listId, title, { tags, assignees });
+  async function handleAddCard(listId, title, tags, assignees, extra = {}) {
+    const { card, tokens = [] } = await api.createCard(listId, title, { tags, assignees, ...extra });
     setLists((prev) =>
       prev.map((l) => {
         let items = l.items;
@@ -416,10 +418,15 @@ export default function Board({
   async function submitNewProject(e) {
     e.preventDefault();
     if (!newProjectTitle.trim() || !projectList) return;
-    await handleAddCard(projectList.id, newProjectTitle.trim(), newProjectTags, newProjectAssignees);
+    await handleAddCard(projectList.id, newProjectTitle.trim(), newProjectTags, newProjectAssignees, {
+      description: newProjectDescription,
+      targetDate: newProjectTargetDate || null,
+    });
     setNewProjectTitle("");
+    setNewProjectDescription("");
     setNewProjectTags([]);
     setNewProjectAssignees([]);
+    setNewProjectTargetDate("");
     setAddingProject(false);
   }
 
@@ -509,8 +516,23 @@ export default function Board({
                     onChange={(e) => setNewProjectTitle(e.target.value)}
                     placeholder="Projektname"
                   />
+                  <textarea
+                    className="edit-desc-input"
+                    placeholder="Beschreibung (optional)"
+                    value={newProjectDescription}
+                    onChange={(e) => setNewProjectDescription(e.target.value)}
+                  />
                   <TagPicker tags={tags} selectedTags={newProjectTags} onChange={setNewProjectTags} />
                   <UserPicker users={users} selectedIds={newProjectAssignees} onChange={setNewProjectAssignees} />
+                  <div className="target-date-row">
+                    <label htmlFor="new-project-target-date">Ziel-Datum</label>
+                    <input
+                      id="new-project-target-date"
+                      type="date"
+                      value={newProjectTargetDate}
+                      onChange={(e) => setNewProjectTargetDate(e.target.value)}
+                    />
+                  </div>
                   <div className="add-card-actions">
                     <button type="submit">Hinzufuegen</button>
                     <button type="button" onClick={() => setAddingProject(false)}>
