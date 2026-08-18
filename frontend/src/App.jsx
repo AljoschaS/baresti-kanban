@@ -10,6 +10,7 @@ import ResponsibleFilterBar from "./components/ResponsibleFilterBar";
 import LoginForm from "./components/LoginForm";
 import { api, onUnauthorized } from "./api";
 import { toListWithItems, cardToItem, tokenToItem } from "./boardUtils";
+import barestiLogo from "./assets/baresti-logo.png";
 import "./App.css";
 
 function SunIcon() {
@@ -293,15 +294,14 @@ export default function App() {
     <div className="page-shell">
       <div className="app">
         <header className="app-header">
-          <h1>
-            {page === "archiv"
-              ? "Archiv"
-              : page === "journal"
-              ? "Journal"
-              : page === "kalender"
-              ? "Kalender"
-              : "Baresti GmbH"}
-          </h1>
+          <div className="app-header-brand">
+            <img src={barestiLogo} alt="Baresti GmbH" className="app-logo" />
+            {page !== "kanban" && (
+              <span className="app-header-page-title">
+                {page === "archiv" ? "Archiv" : page === "journal" ? "Journal" : "Kalender"}
+              </span>
+            )}
+          </div>
         </header>
         {error && <div className="error-banner">{error}</div>}
         {page === "kanban" && !error && !lists && <div className="loading">Lade Board...</div>}

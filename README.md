@@ -64,6 +64,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
 - Fertig vorbereitet fuers Hosting: individueller Login je Person, ein Server liefert Frontend+API zusammen aus, dauerhafte Datenablage konfigurierbar (siehe [DEPLOY.md](./DEPLOY.md))
 - Dark/Light-Modus: Sonne/Mond-Button ganz oben rechts in der Topbar schaltet um; die Wahl wird gemerkt (auch nach Neuladen), startet sonst nach der Systemeinstellung
+- Firmen-Branding: Baresti-Logo oben in der Topbar sowie auf dem Login-Bildschirm (Hintergrund freigestellt), Browser-Tab-Icon (Favicon) aus dem Logo-Symbol; Akzentfarbe (Buttons, aktive Zustaende, Rahmen) auf das Marken-Rot des Logos umgestellt, sowohl im hellen als auch im dunklen Modus – bewusst weiterhin unterscheidbar von der roten Warn-/Loeschfarbe
 
 - Schreibzugriffe auf `db.json` laufen ueber eine interne Warteschlange und werden strikt nacheinander abgearbeitet, nie parallel – verhindert, dass bei gleichzeitigen Aenderungen mehrerer Personen eine Aenderung durch eine andere ueberschrieben wird ("Lost Update")
 

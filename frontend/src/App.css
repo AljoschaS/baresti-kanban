@@ -17,9 +17,11 @@
   --color-text-secondary-2: #42526e;
   --color-text-muted: #6b778c;
   --color-text-faint: #a5adba;
-  --color-primary: #0052cc;
-  --color-primary-hover: #0747a6;
-  --color-primary-bg: #e6effc;
+  /* Marken-Rot (aus dem Baresti-Logo), als Primaerfarbe fuer Buttons/aktive
+     Zustaende - bewusst von --color-danger (Loeschen/Fehler) unterscheidbar. */
+  --color-primary: #ff0000;
+  --color-primary-hover: #cc0000;
+  --color-primary-bg: #ffe3e3;
   --color-danger: #de350b;
   --color-danger-hover: #bf2600;
   --color-danger-bg: #ffebe6;
@@ -48,9 +50,9 @@
   --color-text-secondary-2: #adbac7;
   --color-text-muted: #8b949e;
   --color-text-faint: #6e7681;
-  --color-primary: #4493f8;
-  --color-primary-hover: #6cb0ff;
-  --color-primary-bg: #132a4c;
+  --color-primary: #ff5449;
+  --color-primary-hover: #ff8079;
+  --color-primary-bg: #3a1414;
   --color-danger: #f85149;
   --color-danger-hover: #ff7b72;
   --color-danger-bg: #3c1c1c;
@@ -175,10 +177,15 @@
   gap: 14px;
 }
 
-.login-box h1 {
-  margin: 0;
-  font-size: 20px;
-  text-align: center;
+.login-logo {
+  display: block;
+  height: 64px;
+  width: auto;
+  margin: 0 auto;
+}
+
+[data-theme="dark"] .login-logo {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
 }
 
 .login-subtitle {
@@ -406,14 +413,37 @@
 }
 
 .app-header {
-  padding: 16px 24px;
+  padding: 10px 24px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-3);
+  border-top: 3px solid var(--color-primary);
 }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 20px;
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+/* Im dunklen Design bekommt das Logo (transparenter Hintergrund, dunkelgraue
+   Icon-Elemente) einen dezenten hellen Schein, damit es auf dunklem
+   Untergrund nicht "verschwindet". */
+[data-theme="dark"] .app-logo {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+}
+
+.app-header-page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  padding-left: 14px;
+  border-left: 1px solid var(--color-border);
 }
 
 .filter-bar-row {
