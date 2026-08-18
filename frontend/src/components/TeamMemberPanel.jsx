@@ -36,6 +36,7 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const sortedEntries = [...entries].sort((a, b) => new Date(a.start) - new Date(b.start));
 
@@ -149,8 +150,18 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
           <span className="user-dot" style={{ background: user.color, width: 24, height: 24 }} />
         )}
         <span className="calendar-member-name">{user.name}</span>
+        <button
+          type="button"
+          className="calendar-member-toggle"
+          onClick={() => setFormOpen((v) => !v)}
+          aria-label={formOpen ? "Zeitraum-Formular einklappen" : "Zeitraum-Formular ausklappen"}
+          title={formOpen ? "Einklappen" : "Zeitraum hinzufuegen"}
+        >
+          <span className={"calendar-entries-caret" + (formOpen ? " open" : "")}>▾</span>
+        </button>
       </div>
 
+      {formOpen && (
       <form className="calendar-add-form" onSubmit={submit}>
         <label className="calendar-add-field">
           <span>Vorlage</span>
@@ -211,6 +222,7 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
           Hinzufuegen
         </button>
       </form>
+      )}
 
       <div className="calendar-member-entries">
         <button
