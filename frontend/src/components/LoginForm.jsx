@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { api } from "../api";
-import barestiLogo from "../assets/baresti-logo.png";
 
 // Login-Bildschirm: wird gezeigt, sobald mindestens eine Person ein
 // Passwort hat und noch niemand eingeloggt ist.
@@ -27,7 +26,7 @@ export default function LoginForm({ onLoggedIn }) {
   return (
     <div className="login-shell">
       <form className="login-box" onSubmit={handleSubmit}>
-        <img src={barestiLogo} alt="Baresti GmbH" className="login-logo" />
+        <h1>Baresti GmbH</h1>
         <p className="login-subtitle">Bitte anmelden</p>
         <label className="login-field">
           <span>E-Mail</span>

@@ -129,8 +129,8 @@ export default function Card({ card, users, tags, onDelete, onUpdate, onAddAttac
             <img
               className="avatar card-avatar-lg"
               src={firstUser.avatar}
-              width={40}
-              height={40}
+              width={60}
+              height={60}
               style={{ border: `3px solid ${firstUser.color}` }}
               alt=""
             />

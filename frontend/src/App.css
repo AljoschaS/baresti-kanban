@@ -17,11 +17,13 @@
   --color-text-secondary-2: #42526e;
   --color-text-muted: #6b778c;
   --color-text-faint: #a5adba;
-  /* Marken-Rot (aus dem Baresti-Logo), als Primaerfarbe fuer Buttons/aktive
-     Zustaende - bewusst von --color-danger (Loeschen/Fehler) unterscheidbar. */
-  --color-primary: #ff0000;
-  --color-primary-hover: #cc0000;
-  --color-primary-bg: #ffe3e3;
+  --color-primary: #0052cc;
+  --color-primary-hover: #0747a6;
+  --color-primary-bg: #e6effc;
+  /* Marken-Rot (aus dem Baresti-Logo), nur fuer den Akzentstreifen in der
+     Topbar - bewusst nicht als generelle Primaerfarbe, um das Design nicht
+     zu ueberladen. */
+  --color-brand-accent: #ff0000;
   --color-danger: #de350b;
   --color-danger-hover: #bf2600;
   --color-danger-bg: #ffebe6;
@@ -50,9 +52,10 @@
   --color-text-secondary-2: #adbac7;
   --color-text-muted: #8b949e;
   --color-text-faint: #6e7681;
-  --color-primary: #ff5449;
-  --color-primary-hover: #ff8079;
-  --color-primary-bg: #3a1414;
+  --color-primary: #4493f8;
+  --color-primary-hover: #6cb0ff;
+  --color-primary-bg: #132a4c;
+  --color-brand-accent: #ff5449;
   --color-danger: #f85149;
   --color-danger-hover: #ff7b72;
   --color-danger-bg: #3c1c1c;
@@ -177,15 +180,10 @@
   gap: 14px;
 }
 
-.login-logo {
-  display: block;
-  height: 64px;
-  width: auto;
-  margin: 0 auto;
-}
-
-[data-theme="dark"] .login-logo {
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+.login-box h1 {
+  margin: 0;
+  font-size: 20px;
+  text-align: center;
 }
 
 .login-subtitle {
@@ -416,7 +414,7 @@
   padding: 10px 24px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-3);
-  border-top: 3px solid var(--color-primary);
+  border-top: 3px solid var(--color-brand-accent);
 }
 
 .app-header-brand {
@@ -968,15 +966,15 @@
 }
 
 .avatar-placeholder-lg {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 22px;
   flex-shrink: 0;
 }
 
@@ -1292,20 +1290,22 @@
 }
 
 .tag-token:has(.tag-token-assignee) {
-  padding-left: 26px;
+  padding-left: 42px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .tag-token-assignee {
   position: absolute;
-  top: 4px;
+  top: 2px;
   left: 6px;
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
 }
 
 .tag-token-assignee-avatar {
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -1313,14 +1313,14 @@
 }
 
 .tag-token-assignee-dot {
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1px dashed rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
   line-height: 1;
