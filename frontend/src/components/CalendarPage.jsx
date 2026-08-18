@@ -3,7 +3,14 @@ import { api } from "../api";
 import TeamMemberPanel from "./TeamMemberPanel";
 import CalendarMonthView from "./CalendarMonthView";
 import CalendarWeekView from "./CalendarWeekView";
-import { addDays, startOfWeek, formatMonthLabel, formatWeekLabel } from "../calendarUtils";
+import CalendarYearView from "./CalendarYearView";
+import {
+  addDays,
+  startOfWeek,
+  formatMonthLabel,
+  formatWeekLabel,
+  formatYearLabel,
+} from "../calendarUtils";
 
 // Kalender-Seite: links eine Leiste mit allen Teammitgliedern (Bild+Name,
 // Formular fuer neue Zeitraeume, Dropdown-Liste der eigenen Eintraege),
@@ -45,11 +52,19 @@ export default function CalendarPage({ users = [] }) {
   }
 
   function goPrev() {
-    setCursorDate((d) => (viewMode === "month" ? addMonths(d, -1) : addDays(d, -7)));
+    setCursorDate((d) => {
+      if (viewMode === "month") return addMonths(d, -1);
+      if (viewMode === "year") return addYears(d, -1);
+      return addDays(d, -7);
+    });
   }
 
   function goNext() {
-    setCursorDate((d) => (viewMode === "month" ? addMonths(d, 1) : addDays(d, 7)));
+    setCursorDate((d) => {
+      if (viewMode === "month") return addMonths(d, 1);
+      if (viewMode === "year") return addYears(d, 1);
+      return addDays(d, 7);
+    });
   }
 
   function addMonths(date, amount) {
@@ -59,8 +74,24 @@ export default function CalendarPage({ users = [] }) {
     return d;
   }
 
+  function addYears(date, amount) {
+    const d = new Date(date);
+    d.setDate(1);
+    d.setFullYear(d.getFullYear() + amount);
+    return d;
+  }
+
+  function handleSelectMonth(month) {
+    setCursorDate(month);
+    setViewMode("month");
+  }
+
   const label =
-    viewMode === "month" ? formatMonthLabel(cursorDate) : formatWeekLabel(startOfWeek(cursorDate));
+    viewMode === "month"
+      ? formatMonthLabel(cursorDate)
+      : viewMode === "year"
+      ? formatYearLabel(cursorDate)
+      : formatWeekLabel(startOfWeek(cursorDate));
 
   return (
     <div className="kanban-frame calendar-page">
@@ -107,18 +138,32 @@ export default function CalendarPage({ users = [] }) {
             >
               Woche
             </button>
+            <button
+              type="button"
+              className={"calendar-view-btn" + (viewMode === "year" ? " active" : "")}
+              onClick={() => setViewMode("year")}
+            >
+              Jahr
+            </button>
           </div>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
         {loading && !error && <div className="loading">Lade Kalender...</div>}
-        {!loading &&
-          !error &&
-          (viewMode === "month" ? (
-            <CalendarMonthView cursorDate={cursorDate} entries={entries} users={users} />
-          ) : (
-            <CalendarWeekView cursorDate={cursorDate} entries={entries} users={users} />
-          ))}
+        {!loading && !error && viewMode === "month" && (
+          <CalendarMonthView cursorDate={cursorDate} entries={entries} users={users} />
+        )}
+        {!loading && !error && viewMode === "week" && (
+          <CalendarWeekView cursorDate={cursorDate} entries={entries} users={users} />
+        )}
+        {!loading && !error && viewMode === "year" && (
+          <CalendarYearView
+            cursorDate={cursorDate}
+            entries={entries}
+            users={users}
+            onSelectMonth={handleSelectMonth}
+          />
+        )}
       </div>
     </div>
   );

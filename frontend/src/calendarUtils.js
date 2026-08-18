@@ -94,6 +94,22 @@ export function packSegments(segments) {
   return placed.map((seg) => ({ ...seg, laneCount }));
 }
 
+// Die 12 Monatsanfaenge eines Jahres - fuer die Jahres-Ansicht (ein
+// Mini-Monatsraster pro Eintrag).
+export function getYearMonths(cursorDate) {
+  const year = cursorDate.getFullYear();
+  return Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
+}
+
+export function formatYearLabel(date) {
+  return String(date.getFullYear());
+}
+
+export function formatMonthShortLabel(date) {
+  const label = date.toLocaleDateString("de-DE", { month: "long" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function formatMonthLabel(date) {
   const label = date.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
   return label.charAt(0).toUpperCase() + label.slice(1);
