@@ -49,6 +49,7 @@ const EMPTY_DB = {
   attachments: [],
   archivedProjects: [],
   activityLog: [],
+  availability: [],
 };
 
 if (!fs.existsSync(DB_FILE)) {
@@ -270,6 +271,17 @@ function logActivity(db, actor, action, summary, extra = {}) {
   }
 }
 
+// Kurzform "TT.MM. HH:MM" fuer Journal-Eintraege zu Kalender-Zeitraeumen.
+function formatIsoForLog(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${day}.${month}. ${hours}:${minutes}`;
+}
+
 const USER_COLORS = [
   "#0052CC",
   "#36B37E",
@@ -474,6 +486,9 @@ app.delete("/api/users/:id", (req, res) => {
   db.tokens.forEach((t) => {
     if (t.assigneeId === id) t.assigneeId = null;
   });
+  if (db.availability) {
+    db.availability = db.availability.filter((e) => e.userId !== id);
+  }
   if (removedUser) {
     logActivity(db, req.user, "user.delete", `${req.user?.name || "Jemand"} hat "${removedUser.name}" aus dem Team entfernt`);
   }
@@ -986,6 +1001,61 @@ app.delete("/api/tokens/:id", (req, res) => {
     const card = db.cards.find((c) => c.id === token.cardId);
     const tagLabel = token.tagLabel || getTagLabelFallback(db, token.tagKey);
     logActivity(db, req.user, "token.delete", `${req.user?.name || "Jemand"} hat "${tagLabel}" von "${card?.title || "?"}" entfernt`, { cardTitle: card?.title });
+  }
+  writeDB(db);
+  res.status(204).end();
+});
+
+// --- Kalender / Verfuegbarkeit ---
+// Zeitraeume, die einer Person zugeordnet sind und im Kalender in ihrer
+// Farbe markiert werden (z.B. Urlaub, Termine, Home Office).
+app.get("/api/availability", (req, res) => {
+  const db = readDB();
+  res.json({ entries: db.availability || [] });
+});
+
+app.post("/api/availability", (req, res) => {
+  const db = readDB();
+  if (!db.availability) db.availability = [];
+  const { userId, start, end, title } = req.body;
+  const user = db.users.find((u) => u.id === Number(userId));
+  if (!user) return res.status(400).json({ error: "Teammitglied nicht gefunden" });
+  if (!start || !end) return res.status(400).json({ error: "start und end sind erforderlich" });
+  if (new Date(end).getTime() <= new Date(start).getTime()) {
+    return res.status(400).json({ error: "Ende muss nach dem Start liegen" });
+  }
+  const entry = {
+    id: nextId(db.availability),
+    userId: user.id,
+    start,
+    end,
+    title: (title || "").trim(),
+  };
+  db.availability.push(entry);
+  logActivity(
+    db,
+    req.user,
+    "availability.create",
+    `${req.user?.name || "Jemand"} hat einen Zeitraum fuer ${user.name} im Kalender hinzugefuegt (${formatIsoForLog(start)} - ${formatIsoForLog(end)})`
+  );
+  writeDB(db);
+  res.status(201).json(entry);
+});
+
+app.delete("/api/availability/:id", (req, res) => {
+  const db = readDB();
+  if (!db.availability) db.availability = [];
+  const id = Number(req.params.id);
+  const entry = db.availability.find((e) => e.id === id);
+  db.availability = db.availability.filter((e) => e.id !== id);
+  if (entry) {
+    const user = db.users.find((u) => u.id === entry.userId);
+    logActivity(
+      db,
+      req.user,
+      "availability.delete",
+      `${req.user?.name || "Jemand"} hat einen Zeitraum fuer ${user?.name || "?"} im Kalender entfernt (${formatIsoForLog(entry.start)} - ${formatIsoForLog(entry.end)})`
+    );
   }
   writeDB(db);
   res.status(204).end();

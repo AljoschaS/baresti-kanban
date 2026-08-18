@@ -105,4 +105,9 @@ export const api = {
   updateTag: (key, data) =>
     request(`/tags/${key}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteTag: (key) => request(`/tags/${key}`, { method: "DELETE" }),
+
+  getAvailability: () => request("/availability"),
+  createAvailability: (data) =>
+    request("/availability", { method: "POST", body: JSON.stringify(data) }),
+  deleteAvailability: (id) => request(`/availability/${id}`, { method: "DELETE" }),
 };

@@ -5,6 +5,7 @@ import TagsColumn from "./components/TagsColumn";
 import TopBarDropdown from "./components/TopBarDropdown";
 import ArchivPage from "./components/ArchivPage";
 import JournalPage from "./components/JournalPage";
+import CalendarPage from "./components/CalendarPage";
 import ResponsibleFilterBar from "./components/ResponsibleFilterBar";
 import LoginForm from "./components/LoginForm";
 import { api, onUnauthorized } from "./api";
@@ -256,6 +257,12 @@ export default function App() {
           >
             Journal
           </button>
+          <button
+            className={"site-menu-item" + (page === "kalender" ? " active" : "")}
+            onClick={() => setPage("kalender")}
+          >
+            Kalender
+          </button>
         </nav>
         <button
           type="button"
@@ -286,7 +293,15 @@ export default function App() {
     <div className="page-shell">
       <div className="app">
         <header className="app-header">
-          <h1>{page === "archiv" ? "Archiv" : page === "journal" ? "Journal" : "Baresti GmbH"}</h1>
+          <h1>
+            {page === "archiv"
+              ? "Archiv"
+              : page === "journal"
+              ? "Journal"
+              : page === "kalender"
+              ? "Kalender"
+              : "Baresti GmbH"}
+          </h1>
         </header>
         {error && <div className="error-banner">{error}</div>}
         {page === "kanban" && !error && !lists && <div className="loading">Lade Board...</div>}
@@ -350,6 +365,14 @@ export default function App() {
               <TopBarExtras />
             </div>
             <JournalPage users={users} />
+          </>
+        )}
+        {page === "kalender" && (
+          <>
+            <div className="filter-bar-row filter-bar-row-end">
+              <TopBarExtras />
+            </div>
+            <CalendarPage users={users} />
           </>
         )}
       </div>
