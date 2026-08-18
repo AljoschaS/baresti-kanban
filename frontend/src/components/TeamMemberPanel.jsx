@@ -35,7 +35,6 @@ export default function TeamMemberPanel({ user, entries, onAdd, onDelete }) {
       setFromInput("");
       setToInput("");
       setTitle("");
-      setListOpen(true);
     } catch (err) {
       setError(err.message);
     } finally {
