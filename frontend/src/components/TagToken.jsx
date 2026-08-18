@@ -3,15 +3,26 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getTagDef } from "../tags";
 
-function NoteIcon() {
+// Sprechblase: gefuellt/deutlich sichtbar sobald eine Notiz hinterlegt ist,
+// als reines Umriss-Icon wenn (noch) leer.
+function NoteBubbleIcon({ filled }) {
   return (
-    <svg viewBox="0 0 16 16" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 16 16" width="14" height="14" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M2 3.5h12M2 7h12M2 10.5h7"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
+        d="M2 3.2c0-.66.54-1.2 1.2-1.2h9.6c.66 0 1.2.54 1.2 1.2v6.1c0 .66-.54 1.2-1.2 1.2H6.9L4 13.3v-2.8H3.2C2.54 10.5 2 9.96 2 9.3V3.2Z"
+        fill={filled ? "#ffffff" : "none"}
+        stroke={filled ? "none" : "currentColor"}
+        strokeWidth="1.3"
+        strokeLinejoin="round"
       />
+      {filled && (
+        <path
+          d="M4.6 5.2h6.8M4.6 7.4h4.4"
+          stroke="currentColor"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+        />
+      )}
     </svg>
   );
 }
@@ -123,7 +134,7 @@ export default function TagToken({ token, tags, onDelete, cardAssignees, users, 
           title={hasNote ? token.note : "Notiz hinzufuegen"}
           aria-label="Notiz zu diesem Tag"
         >
-          <NoteIcon />
+          <NoteBubbleIcon filled={hasNote} />
         </button>
       )}
       <button

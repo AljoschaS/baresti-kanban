@@ -1266,23 +1266,33 @@
 
 .tag-token-note-btn {
   position: absolute;
-  bottom: 4px;
-  right: 6px;
+  bottom: 3px;
+  right: 5px;
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
-  padding: 2px;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 1px;
   display: flex;
   align-items: center;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.tag-token:hover .tag-token-note-btn {
+  opacity: 1;
 }
 
 .tag-token-note-btn:hover {
-  color: rgba(255, 255, 255, 0.95);
+  color: #fff;
 }
 
+/* Sobald eine Notiz hinterlegt ist, bleibt die Sprechblase permanent
+   sichtbar (nicht erst beim Hover) - gefuellt/weiss, damit sie auf jeder
+   Tag-Farbe gut erkennbar ist. */
 .tag-token-note-btn.has-note {
-  color: #fff;
+  opacity: 1;
+  color: var(--color-text-secondary);
 }
 
 .tag-token:has(.tag-token-note-btn) {
