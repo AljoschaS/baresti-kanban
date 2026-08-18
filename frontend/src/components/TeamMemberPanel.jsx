@@ -83,13 +83,23 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
       allSegments = repeatSegmentsWeekly(templateSegments, new Date(repeatUntil));
     }
 
+    // Bei einer Vorlage soll "Bereitschaft" immer im Titel stehen (zur
+    // besseren Uebersicht im Kalender), auch wenn zusaetzlich ein eigener
+    // Text eingetragen wurde.
+    const trimmedTitle = title.trim();
+    const finalTitle = presetKey
+      ? trimmedTitle
+        ? `Bereitschaft – ${trimmedTitle}`
+        : "Bereitschaft"
+      : trimmedTitle;
+
     setSubmitting(true);
     try {
       if (allSegments.length === 1) {
         await onAdd(user.id, {
           start: allSegments[0].start.toISOString(),
           end: allSegments[0].end.toISOString(),
-          title: title.trim(),
+          title: finalTitle,
         });
       } else {
         await onAddBulk(
@@ -97,7 +107,7 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
           allSegments.map((seg) => ({
             start: seg.start.toISOString(),
             end: seg.end.toISOString(),
-            title: title.trim(),
+            title: finalTitle,
           }))
         );
       }
@@ -176,7 +186,9 @@ export default function TeamMemberPanel({ user, entries, onAdd, onAddBulk, onDel
           className="calendar-add-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titel/Grund (optional)"
+          placeholder={
+            presetKey ? "Zusaetzlicher Text (optional) - „Bereitschaft“ wird automatisch ergaenzt" : "Titel/Grund (optional)"
+          }
         />
 
         <label className="calendar-repeat-row">
