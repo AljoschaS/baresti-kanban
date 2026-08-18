@@ -5,6 +5,7 @@ import { getTagDisplay } from "../tags";
 import TagPicker from "./TagPicker";
 import UserPicker from "./UserPicker";
 import AttachmentList from "./AttachmentList";
+import CustomerInfoPopover from "./CustomerInfoPopover";
 
 function TrashIcon() {
   return (
@@ -185,6 +186,7 @@ export default function Card({ card, users, tags, onDelete, onUpdate, onAddAttac
         attachments={card.attachments || []}
         onAdd={(data) => onAddAttachment(card.id, data)}
         onDelete={onDeleteAttachment}
+        extraAction={<CustomerInfoPopover card={card} onUpdate={onUpdate} />}
       />
       <div className="card-actions">
         <button

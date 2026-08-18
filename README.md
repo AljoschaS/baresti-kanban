@@ -56,6 +56,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
 - Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
 - Hochgeladene Dateien landen unter `backend/uploads/`; ueber die JSON-Anfrage aktuell max. ca. 6-7 MB pro Datei
+- Jedes Projekt kann Kundennummer und Ansprechpartner (Name, Telefon, E-Mail) bekommen: Button rechts neben "+ Link"/"+ Datei" oeffnet ein kleines Dropdown dafuer; ist etwas hinterlegt, zeigt der Button die Kundennummer bzw. den Namen direkt an. Bleibt beim Archivieren/Wiederherstellen erhalten
 - Links vom Projektnamen zeigt eine schmale Spalte Start- und Ziel-Datum: Start wird beim Anlegen automatisch gesetzt und ist nicht mehr aenderbar, das Ziel-Datum kann jederzeit ueber "Bearbeiten" gesetzt/geaendert werden
 - Beim Ziehen eines Tags/einer Spalte bleibt eine Kopie sichtbar am Mauszeiger (DragOverlay), statt erst beim Loslassen zu erscheinen
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)
@@ -96,6 +97,7 @@ Kanban/
     │       ├── TeamColumn.jsx   # Team-Verwaltung (Inhalt des Team-Dropdowns)
     │       ├── TagsColumn.jsx   # Tags-Verwaltung (Inhalt des Tags-Dropdowns)
     │       ├── TopBarDropdown.jsx # Generisches Dropdown-Panel fuer die Topbar
+    │       ├── CustomerInfoPopover.jsx # Kundennummer/Ansprechpartner-Dropdown am Projekt
     │       ├── ResponsibleFilterBar.jsx # Filterleiste ueber der Tabelle
     │       └── TagPicker.jsx
     └── package.json

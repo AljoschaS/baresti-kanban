@@ -101,6 +101,14 @@ export default function ArchivPage({
               </div>
             )}
             {project.description && <div className="card-desc">{project.description}</div>}
+            {(project.customerNumber || project.contactName || project.contactPhone || project.contactEmail) && (
+              <div className="archiv-item-customer">
+                {project.customerNumber && <span>Kunde: {project.customerNumber}</span>}
+                {project.contactName && <span>Ansprechpartner: {project.contactName}</span>}
+                {project.contactPhone && <span>Tel: {project.contactPhone}</span>}
+                {project.contactEmail && <span>E-Mail: {project.contactEmail}</span>}
+              </div>
+            )}
             <AttachmentList attachments={project.attachments || []} readOnly />
           </div>
         );

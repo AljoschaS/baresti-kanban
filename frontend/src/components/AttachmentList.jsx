@@ -13,7 +13,7 @@ function readFileAsDataUrl(file) {
 // Zeigt Web-Links und hochgeladene Dateien einer Karte an und erlaubt es,
 // direkt (ohne in den Bearbeiten-Modus zu muessen) neue hinzuzufuegen oder
 // zu entfernen.
-export default function AttachmentList({ attachments, onAdd, onDelete, readOnly = false }) {
+export default function AttachmentList({ attachments, onAdd, onDelete, readOnly = false, extraAction = null }) {
   const [addingLink, setAddingLink] = useState(false);
   const [linkLabel, setLinkLabel] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
@@ -96,6 +96,7 @@ export default function AttachmentList({ attachments, onAdd, onDelete, readOnly 
             {uploading ? "Laedt hoch..." : "+ Datei"}
             <input type="file" hidden disabled={uploading} onChange={handleFileSelected} />
           </label>
+          {extraAction}
         </div>
       ))}
     </div>

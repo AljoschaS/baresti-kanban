@@ -572,6 +572,10 @@ app.post("/api/cards", (req, res) => {
     assignees: normalizeAssignees(assignees, db),
     startDate: today,
     targetDate: req.body.targetDate || null,
+    customerNumber: req.body.customerNumber || "",
+    contactName: req.body.contactName || "",
+    contactPhone: req.body.contactPhone || "",
+    contactEmail: req.body.contactEmail || "",
   };
   db.cards.push(newCard);
 
@@ -599,7 +603,7 @@ app.patch("/api/cards/:id", (req, res) => {
   const card = db.cards.find((c) => c.id === id);
   if (!card) return res.status(404).json({ error: "Karte nicht gefunden" });
 
-  const { title, description, listId, position, tags, assignees, targetDate } = req.body;
+  const { title, description, listId, position, tags, assignees, targetDate, customerNumber, contactName, contactPhone, contactEmail } = req.body;
   // Reine Positions-/Listen-Aenderungen (Zeilen per Drag&Drop umsortieren)
   // werden bewusst NICHT im Journal geloggt - nur inhaltliche Aenderungen.
   const changedParts = [];
@@ -634,6 +638,18 @@ app.patch("/api/cards/:id", (req, res) => {
     changedParts.push("Ziel-Datum");
     card.targetDate = targetDate || null;
   }
+  if (
+    (customerNumber !== undefined && customerNumber !== (card.customerNumber || "")) ||
+    (contactName !== undefined && contactName !== (card.contactName || "")) ||
+    (contactPhone !== undefined && contactPhone !== (card.contactPhone || "")) ||
+    (contactEmail !== undefined && contactEmail !== (card.contactEmail || ""))
+  ) {
+    changedParts.push("Kundendaten");
+  }
+  if (customerNumber !== undefined) card.customerNumber = customerNumber;
+  if (contactName !== undefined) card.contactName = contactName;
+  if (contactPhone !== undefined) card.contactPhone = contactPhone;
+  if (contactEmail !== undefined) card.contactEmail = contactEmail;
 
   let newTokens = [];
   if (tags !== undefined) {
@@ -721,6 +737,10 @@ app.post("/api/cards/:id/archive", (req, res) => {
     targetDate: card.targetDate,
     archivedAt: new Date().toISOString().slice(0, 10),
     attachments: cardAttachments.map((a) => ({ ...a })),
+    customerNumber: card.customerNumber || "",
+    contactName: card.contactName || "",
+    contactPhone: card.contactPhone || "",
+    contactEmail: card.contactEmail || "",
   };
   db.archivedProjects.push(archived);
 
@@ -738,7 +758,8 @@ app.post("/api/cards/:id/archive", (req, res) => {
 // Ein archiviertes Projekt wieder auf dem Board anlegen - in der Ausgangslage,
 // so wie ein frisch neu erstelltes Projekt: ganz in der "Projekte"-Liste,
 // die Tags starten wieder in der ersten Arbeits-Spalte, neues Start-Datum,
-// kein Ziel-Datum. Titel, Tags, Zustaendige, Beschreibung und Anhaenge bleiben erhalten.
+// kein Ziel-Datum. Titel, Tags, Zustaendige, Beschreibung, Anhaenge und
+// Kundendaten bleiben erhalten.
 app.post("/api/archive/:id/restore", (req, res) => {
   const db = readDB();
   const id = Number(req.params.id);
@@ -762,6 +783,10 @@ app.post("/api/archive/:id/restore", (req, res) => {
     assignees: normalizeAssignees(archived.assignees, db),
     startDate: today,
     targetDate: null,
+    customerNumber: archived.customerNumber || "",
+    contactName: archived.contactName || "",
+    contactPhone: archived.contactPhone || "",
+    contactEmail: archived.contactEmail || "",
   };
   db.cards.push(newCard);
 

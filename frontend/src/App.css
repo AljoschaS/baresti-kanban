@@ -566,6 +566,15 @@
   margin-bottom: 6px;
 }
 
+.archiv-item-customer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
 .error-banner {
   margin: 16px 24px;
   padding: 12px 16px;
@@ -1012,6 +1021,64 @@
 
 .attachment-add-btn:hover {
   background: var(--color-bg);
+}
+
+.customer-info-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-info-btn.has-data {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+/* Wird per Portal direkt in document.body gerendert (siehe
+   CustomerInfoPopover.jsx) - position:fixed statt absolute, weil das Board
+   mehrere overflow:hidden/auto Vorfahren hat, die ein normal verschachteltes
+   Popover abschneiden wuerden. */
+.customer-info-panel {
+  position: fixed;
+  z-index: 60;
+  width: 220px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(9, 30, 66, 0.22);
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.customer-info-panel form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customer-info-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.customer-info-panel input {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 .add-card-btn,
