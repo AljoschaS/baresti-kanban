@@ -775,7 +775,7 @@
 }
 
 .stage-header-cell {
-  width: 200px;
+  flex: 1 1 200px;
   min-width: 200px;
   box-sizing: border-box;
   padding: 10px;
@@ -785,6 +785,13 @@
   border-right: 1px solid var(--color-border-2);
   font-weight: 600;
   font-size: 13px;
+}
+
+/* "+ Spalte" bleibt kompakt, statt mit den echten Arbeits-Spalten
+   mitzuwachsen - die sollen den frei werdenden Platz unter sich aufteilen. */
+.add-stage-cell {
+  flex: 0 0 170px;
+  min-width: 170px;
 }
 
 .stage-title {
@@ -809,7 +816,7 @@
 }
 
 .swimlane-cell {
-  width: 200px;
+  flex: 1 1 200px;
   min-width: 200px;
   box-sizing: border-box;
   padding: 8px;
@@ -817,6 +824,13 @@
   flex-direction: column;
   border-right: 1px solid var(--color-border-light);
   background: var(--color-bg-subtle);
+}
+
+/* Platzhalter unter "+ Spalte" - bleibt kompakt wie der Button selbst,
+   statt mit den echten Arbeits-Spalten mitzuwachsen. */
+.add-stage-filler-cell {
+  flex: 0 0 170px;
+  min-width: 170px;
 }
 
 .swimlane-cell-tags {
