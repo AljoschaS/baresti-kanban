@@ -1711,7 +1711,9 @@
   }
 
   .tag-token:has(.tag-token-assignee) {
-    padding-left: 22px;
+    padding-left: 42px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
 
