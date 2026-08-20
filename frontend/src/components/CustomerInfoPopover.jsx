@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 function ContactIcon() {
@@ -65,9 +65,51 @@ export default function CustomerInfoPopover({ card, onUpdate }) {
     setContactPhone(card.contactPhone || "");
     setContactEmail(card.contactEmail || "");
     const rect = triggerRef.current.getBoundingClientRect();
+    // Erste, optimistische Platzierung unterhalb des Buttons - wird direkt im
+    // Anschluss per Layout-Effect anhand der tatsaechlichen Panel-Groesse
+    // korrigiert (z.B. nach oben aufklappen, wenn unten kein Platz mehr ist).
     setCoords({ top: rect.bottom + 6, left: rect.left });
     setOpen(true);
   }
+
+  // Sobald das Panel im DOM ist (aber noch bevor der Browser malt), pruefen
+  // ob es unten/rechts aus dem sichtbaren Fensterbereich herausragen wuerde
+  // (z.B. auf einem 13-Zoll-Laptop mit vollem Fenster) - und falls ja, die
+  // Position entsprechend nach oben bzw. innerhalb des Fensters verschieben.
+  // Zusaetzlich bekommt das Panel eine maximale Hoehe mit eigenem Scrollen,
+  // damit selbst in extrem niedrigen Fenstern nichts unerreichbar wird.
+  useLayoutEffect(() => {
+    if (!open || !panelRef.current || !triggerRef.current) return;
+    const margin = 10;
+    const trigger = triggerRef.current.getBoundingClientRect();
+    const panelHeight = panelRef.current.offsetHeight;
+    const panelWidth = panelRef.current.offsetWidth;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const spaceBelow = vh - trigger.bottom - margin;
+    const spaceAbove = trigger.top - margin;
+    let top;
+    if (panelHeight <= spaceBelow || spaceBelow >= spaceAbove) {
+      top = trigger.bottom + 6;
+    } else {
+      top = trigger.top - panelHeight - 6;
+    }
+    top = Math.max(margin, Math.min(top, vh - margin - Math.min(panelHeight, vh - 2 * margin)));
+
+    let left = trigger.left;
+    if (left + panelWidth > vw - margin) left = vw - margin - panelWidth;
+    if (left < margin) left = margin;
+
+    const maxHeight = vh - 2 * margin;
+
+    setCoords((prev) =>
+      prev && prev.top === top && prev.left === left && prev.maxHeight === maxHeight
+        ? prev
+        : { top, left, maxHeight }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function close() {
     setOpen(false);
@@ -103,7 +145,7 @@ export default function CustomerInfoPopover({ card, onUpdate }) {
           <div
             className="customer-info-panel"
             ref={panelRef}
-            style={{ top: coords.top, left: coords.left }}
+            style={{ top: coords.top, left: coords.left, maxHeight: coords.maxHeight }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >

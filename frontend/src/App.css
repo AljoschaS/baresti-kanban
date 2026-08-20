@@ -1095,6 +1095,10 @@
   box-shadow: 0 8px 20px rgba(9, 30, 66, 0.22);
   padding: 10px;
   box-sizing: border-box;
+  /* Sicherheitsnetz falls trotz Positionierungslogik (siehe
+     CustomerInfoPopover.jsx) nicht genug Platz im Fenster ist: eigenes
+     Scrollen statt abgeschnittener, unerreichbarer Felder. */
+  overflow-y: auto;
 }
 
 .customer-info-panel form {
