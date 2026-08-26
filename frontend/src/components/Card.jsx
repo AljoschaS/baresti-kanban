@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getTagDisplay } from "../tags";
@@ -18,6 +18,60 @@ function TrashIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+// Beschreibung eines Projekts. Standardmaessig eingeklappt (nur die ersten
+// beiden Zeilen), damit lange Texte die Projektzeile nicht unnoetig in die
+// Hoehe ziehen. Der "Mehr/Weniger"-Button erscheint nur, wenn der Text
+// tatsaechlich laenger als die zwei sichtbaren Zeilen ist - das wird nach dem
+// Rendern (und bei Textaenderung/Groessenaenderung des Fensters) gemessen.
+function CardDescription({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const textRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+
+    function measure() {
+      // Im eingeklappten Zustand ist die Hoehe per line-clamp begrenzt:
+      // ist der Inhalt hoeher als der sichtbare Bereich, gibt es etwas
+      // aufzuklappen. Im ausgeklappten Zustand bleibt der Button ohnehin
+      // sichtbar, deshalb dann nicht neu messen.
+      if (expanded) return;
+      setOverflowing(el.scrollHeight > el.clientHeight + 1);
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text, expanded]);
+
+  return (
+    <div className="card-desc-wrap">
+      <div
+        ref={textRef}
+        className={"card-desc" + (expanded ? " expanded" : "")}
+      >
+        {text}
+      </div>
+      {(overflowing || expanded) && (
+        <button
+          type="button"
+          className="card-desc-toggle"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded((v) => !v);
+          }}
+        >
+          {expanded ? "Weniger anzeigen" : "Mehr anzeigen"}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -181,7 +235,7 @@ export default function Card({ card, users, tags, onDelete, onUpdate, onAddAttac
           })}
         </div>
       )}
-      {card.description && <div className="card-desc">{card.description}</div>}
+      {card.description && <CardDescription text={card.description} />}
       <AttachmentList
         attachments={card.attachments || []}
         onAdd={(data) => onAddAttachment(card.id, data)}
