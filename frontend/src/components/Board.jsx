@@ -125,12 +125,20 @@ export default function Board({
     const overListId = resolveStageListIdFromOverId(over.id);
     if (overListId == null || overListId === activeListId) return;
 
-    const oldIndex = lists.findIndex((l) => l.id === activeListId);
-    const newIndex = lists.findIndex((l) => l.id === overListId);
+    // Wichtig: die Reihenfolge muss innerhalb von stageLists berechnet werden
+    // (der tatsaechlich sortierbaren, nach position sortierten Teilmenge),
+    // nicht im rohen "lists"-Array - dessen Reihenfolge nicht der sichtbaren
+    // Spaltenreihenfolge entspricht. Sonst landen beim Speichern falsche
+    // Positionen und die Spalte "springt" nach dem Neuladen wieder zurueck.
+    const oldIndex = stageLists.findIndex((l) => l.id === activeListId);
+    const newIndex = stageLists.findIndex((l) => l.id === overListId);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const reordered = arrayMove(lists, oldIndex, newIndex);
-    setLists(reordered);
+    const reordered = arrayMove(stageLists, oldIndex, newIndex);
+    const positionById = new Map(reordered.map((l, index) => [l.id, index]));
+    setLists((prev) =>
+      prev.map((l) => (positionById.has(l.id) ? { ...l, position: positionById.get(l.id) } : l))
+    );
     persistListPositions(reordered);
   }
 

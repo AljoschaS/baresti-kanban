@@ -1347,8 +1347,11 @@
 .tag-token-assignee-select {
   position: absolute;
   inset: 0;
-  width: 16px;
-  height: 16px;
+  /* Kein festes width/height mehr - "inset: 0" soll das unsichtbare
+     Auswahlfeld ueber den GESAMTEN Kreis legen (vorher nur 16x16px oben
+     links, unabhaengig von der tatsaechlichen Kreisgroesse), damit man
+     ueberall auf dem Avatar/Platzhalter klicken kann, um eine Person
+     zuzuweisen. */
   opacity: 0;
   cursor: pointer;
   border: none;
