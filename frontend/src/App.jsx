@@ -292,7 +292,7 @@ export default function App() {
 
   return (
     <div className="page-shell">
-      <div className="app">
+      <div className={"app" + (page === "kanban" ? " app-board-page" : "")}>
         <header className="app-header">
           <div className="app-header-brand">
             <img src={barestiLogo} alt="Baresti GmbH" className="app-logo" />
@@ -318,7 +318,7 @@ export default function App() {
               />
               <TopBarExtras />
             </div>
-            <div className="kanban-frame">
+            <div className="kanban-frame board-frame">
               <div className="app-main">
                 <Board
                   lists={lists}

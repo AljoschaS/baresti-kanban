@@ -400,6 +400,20 @@
   flex: 1 1 100%;
   min-width: 0;
   color: var(--color-text);
+  /* Spalten-Layout ueber die volle Fensterhoehe, damit das Board darunter
+     (.board-frame) den verbleibenden Platz exakt ausfuellen kann. Andere
+     Seiten (Archiv/Journal/Kalender) wachsen weiterhin natuerlich, weil
+     min-height statt height gesetzt ist. */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Auf der Kanban-Seite wird die Hoehe fest ans Fenster gebunden: das Board
+   scrollt dann in sich selbst, statt die ganze Seite zu verschieben. */
+.app.app-board-page {
+  height: 100vh;
+  overflow: hidden;
 }
 
 .kanban-frame {
@@ -408,6 +422,27 @@
   border-radius: 12px;
   background: var(--color-surface);
   overflow: hidden;
+}
+
+/* Nur das Kanban-Board: fuellt die restliche Fensterhoehe aus, damit das
+   vertikale Scrollen INNERHALB des Boards stattfindet. Nur so bleibt die
+   Kopfzeile mit den Spaltennamen per position:sticky sichtbar - scrollt
+   stattdessen die ganze Seite, wandert sie mit nach oben aus dem Bild. */
+.board-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-frame .app-main {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.board-frame .swimlane-scroll {
+  overflow: auto;
 }
 
 .app-header {

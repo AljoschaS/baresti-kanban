@@ -39,6 +39,7 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Archivierte Projekte lassen sich per Muelltonnen-Icon (mit Sicherheitsabfrage) endgueltig loeschen, inklusive hochgeladener Anhaenge
 - Ueber der Tabelle (Kanban und Archiv) gibt es eine Filterleiste: Suche nach Projektname, nach Hauptverantwortlichem (erster Zugewiesener) und nach Beteiligten (alle weiteren Zugewiesenen); alle drei Felder lassen sich kombinieren
 - Zeilen-Ansicht: jedes Projekt ist eine eigene Zeile, klar durch eine Linie von den anderen getrennt
+- Die Kopfzeile mit den Spaltennamen bleibt beim Scrollen oben stehen (das Board scrollt in sich selbst, Logo-Leiste und Filterzeile bleiben ebenfalls sichtbar)
 - Projekt-Zeilen lassen sich ueber einen Griff (⠿) ganz links per Drag & Drop neu sortieren; beim Ziehen bleibt eine Vorschau am Mauszeiger sichtbar (wie bei Tags/Spalten)
 - Ganz links in jeder Zeile: Projektname, Team-Bild/Initiale, zugewiesene Personen, feste Tag-Uebersicht
 - Rechts daneben die Arbeits-Spalten als Kopfzeile: Warte auf Kunden, In Bearbeitung, on Hold, Fertig
