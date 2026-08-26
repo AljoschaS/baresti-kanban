@@ -56,9 +56,10 @@ Vite zeigt dir eine lokale Adresse an, meist http://localhost:5173 – die im Br
 - Individueller Login: sobald mindestens eine Person ein Passwort hat, verlangt das Board eine Anmeldung mit E-Mail + Passwort; Sitzung bleibt 30 Tage gueltig (Cookie), Abmelden-Button oben rechts neben dem Team-Namen. Solange noch niemand ein Passwort gesetzt hat, bleibt das Board offen (Einrichtungsphase)
 - Jede Person kann ein Profilbild bekommen: hochladen, per Drag verschieben und mit einem Regler zoomen, wird automatisch rund zugeschnitten und komprimiert gespeichert
 - Die Rahmenfarbe des Profilbilds (bzw. der Punkt ohne Bild) ist frei waehlbar
-- Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), direkt unter der Beschreibung, ohne extra in den Bearbeiten-Modus zu muessen
+- Jede Karte kann Anhaenge bekommen: Web-Links oder hochgeladene Dateien (Bilder, PDFs etc.), ohne extra in den Bearbeiten-Modus zu muessen. Links und Dateien stecken jeweils in einem eigenen Dropdown mit kleiner Anzahl-Badge (analog zu den Kundendaten), damit lange Anhang-Listen die Projektzeile nicht in die Hoehe ziehen
 - Hochgeladene Dateien landen unter `backend/uploads/`; ueber die JSON-Anfrage aktuell max. ca. 6-7 MB pro Datei
-- Jedes Projekt kann Kundennummer und Ansprechpartner (Name, Telefon, E-Mail) bekommen: Button rechts neben "+ Link"/"+ Datei" oeffnet ein kleines Dropdown dafuer; ist etwas hinterlegt, zeigt der Button die Kundennummer bzw. den Namen direkt an. Bleibt beim Archivieren/Wiederherstellen erhalten
+- Jedes Projekt kann Kundennummer und Ansprechpartner (Name, Telefon, E-Mail) bekommen: Button rechts neben "Link"/"Datei" oeffnet ein kleines Dropdown dafuer; ist etwas hinterlegt, zeigt der Button die Kundennummer bzw. den Namen direkt an. Bleibt beim Archivieren/Wiederherstellen erhalten
+- Die Projekt-Beschreibung ist standardmaessig auf zwei Zeilen eingeklappt; ist der Text laenger, erscheint darunter ein "Mehr anzeigen"-Button zum Auf-/Zuklappen
 - Links vom Projektnamen zeigt eine schmale Spalte Start- und Ziel-Datum: Start wird beim Anlegen automatisch gesetzt und ist nicht mehr aenderbar, das Ziel-Datum kann jederzeit ueber "Bearbeiten" gesetzt/geaendert werden
 - Beim Ziehen eines Tags/einer Spalte bleibt eine Kopie sichtbar am Mauszeiger (DragOverlay), statt erst beim Loslassen zu erscheinen
 - Alle Aenderungen werden ueber die API gespeichert (backend/db.json)

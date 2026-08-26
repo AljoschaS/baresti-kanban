@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
+import { usePopoverPosition } from "../usePopoverPosition";
 
 function ContactIcon() {
   return (
@@ -12,20 +13,14 @@ function ContactIcon() {
 }
 
 // Kundennummer + Ansprechpartner (Name/Telefon/E-Mail) fuer ein Projekt.
-// Wird als kleiner Button neben "+ Link"/"+ Datei" angezeigt und oeffnet ein
-// Popover mit den Eingabefeldern. Das Panel wird per Portal direkt in
-// document.body gerendert (nicht im normalen DOM-Baum), weil das Board
-// mehrere Vorfahren mit overflow:hidden/auto hat (.kanban-frame,
-// .swimlane-scroll), die ein normal-positioniertes Popover abschneiden wuerden.
+// Wird als kleiner Button neben "Link"/"Datei" angezeigt und oeffnet ein
+// Popover mit den Eingabefeldern (Positionierung siehe usePopoverPosition).
 export default function CustomerInfoPopover({ card, onUpdate }) {
-  const [open, setOpen] = useState(false);
+  const { open, openAt, close, triggerRef, panelRef, panelStyle } = usePopoverPosition();
   const [customerNumber, setCustomerNumber] = useState(card.customerNumber || "");
   const [contactName, setContactName] = useState(card.contactName || "");
   const [contactPhone, setContactPhone] = useState(card.contactPhone || "");
   const [contactEmail, setContactEmail] = useState(card.contactEmail || "");
-  const [coords, setCoords] = useState(null);
-  const triggerRef = useRef(null);
-  const panelRef = useRef(null);
 
   const hasData = Boolean(
     (card.customerNumber && card.customerNumber.trim()) ||
@@ -34,85 +29,17 @@ export default function CustomerInfoPopover({ card, onUpdate }) {
       (card.contactEmail && card.contactEmail.trim())
   );
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e) {
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(e.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target)
-      ) {
-        close();
-      }
-    }
-    function handleKeyDown(e) {
-      if (e.key === "Escape") close();
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   function openPopover(e) {
     e.stopPropagation();
+    if (open) {
+      close();
+      return;
+    }
     setCustomerNumber(card.customerNumber || "");
     setContactName(card.contactName || "");
     setContactPhone(card.contactPhone || "");
     setContactEmail(card.contactEmail || "");
-    const rect = triggerRef.current.getBoundingClientRect();
-    // Erste, optimistische Platzierung unterhalb des Buttons - wird direkt im
-    // Anschluss per Layout-Effect anhand der tatsaechlichen Panel-Groesse
-    // korrigiert (z.B. nach oben aufklappen, wenn unten kein Platz mehr ist).
-    setCoords({ top: rect.bottom + 6, left: rect.left });
-    setOpen(true);
-  }
-
-  // Sobald das Panel im DOM ist (aber noch bevor der Browser malt), pruefen
-  // ob es unten/rechts aus dem sichtbaren Fensterbereich herausragen wuerde
-  // (z.B. auf einem 13-Zoll-Laptop mit vollem Fenster) - und falls ja, die
-  // Position entsprechend nach oben bzw. innerhalb des Fensters verschieben.
-  // Zusaetzlich bekommt das Panel eine maximale Hoehe mit eigenem Scrollen,
-  // damit selbst in extrem niedrigen Fenstern nichts unerreichbar wird.
-  useLayoutEffect(() => {
-    if (!open || !panelRef.current || !triggerRef.current) return;
-    const margin = 10;
-    const trigger = triggerRef.current.getBoundingClientRect();
-    const panelHeight = panelRef.current.offsetHeight;
-    const panelWidth = panelRef.current.offsetWidth;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    const spaceBelow = vh - trigger.bottom - margin;
-    const spaceAbove = trigger.top - margin;
-    let top;
-    if (panelHeight <= spaceBelow || spaceBelow >= spaceAbove) {
-      top = trigger.bottom + 6;
-    } else {
-      top = trigger.top - panelHeight - 6;
-    }
-    top = Math.max(margin, Math.min(top, vh - margin - Math.min(panelHeight, vh - 2 * margin)));
-
-    let left = trigger.left;
-    if (left + panelWidth > vw - margin) left = vw - margin - panelWidth;
-    if (left < margin) left = margin;
-
-    const maxHeight = vh - 2 * margin;
-
-    setCoords((prev) =>
-      prev && prev.top === top && prev.left === left && prev.maxHeight === maxHeight
-        ? prev
-        : { top, left, maxHeight }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  function close() {
-    setOpen(false);
+    openAt();
   }
 
   function save(e) {
@@ -123,7 +50,7 @@ export default function CustomerInfoPopover({ card, onUpdate }) {
       contactPhone: contactPhone.trim(),
       contactEmail: contactEmail.trim(),
     });
-    setOpen(false);
+    close();
   }
 
   return (
@@ -140,12 +67,12 @@ export default function CustomerInfoPopover({ card, onUpdate }) {
         {hasData ? card.customerNumber || card.contactName || "Kunde" : "+ Kunde"}
       </button>
       {open &&
-        coords &&
+        panelStyle &&
         createPortal(
           <div
             className="customer-info-panel"
             ref={panelRef}
-            style={{ top: coords.top, left: coords.left, maxHeight: coords.maxHeight }}
+            style={panelStyle}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
