@@ -526,6 +526,7 @@ export default function Board({
                   />
                   <textarea
                     className="edit-desc-input"
+                    rows={15}
                     placeholder="Beschreibung (optional)"
                     value={newProjectDescription}
                     onChange={(e) => setNewProjectDescription(e.target.value)}
