@@ -1364,6 +1364,8 @@
 .edit-desc-input {
   resize: vertical;
   min-height: 40px;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .target-date-row {

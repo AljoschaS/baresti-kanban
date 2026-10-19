@@ -128,6 +128,7 @@ export default function Card({ card, users, tags, onDelete, onUpdate, onAddAttac
           />
           <textarea
             className="edit-desc-input"
+            rows={15}
             placeholder="Beschreibung (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
